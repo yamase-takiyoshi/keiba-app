@@ -3,16 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>競馬EV Pro - JRA/NAR リアルデータ対応</title>
+<title>競馬EV Pro</title>
 <style>
-:root{
-  --bg:#151515;--panel:#222;--panel2:#2b2b2b;--panel3:#1c1c1c;--line:#3a3a3a;
-  --text:#f3f3f3;--muted:#aaa;--gold:#d6a51f;--gold2:#ffd766;--blue:#3b82f6;
-  --green:#22c55e;--red:#ef4444;--orange:#fb923c;--shadow:0 10px 30px rgba(0,0,0,.35);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{min-height:100vh}.app{max-width:1180px;margin:auto;padding:18px 14px 90px}.header{display:flex;gap:14px;align-items:center;margin-bottom:16px}.logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f4c542,#806116);display:grid;place-items:center;font-size:26px;box-shadow:var(--shadow)}h1{font-size:24px;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.45}.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px;position:sticky;top:0;background:rgba(21,21,21,.94);backdrop-filter:blur(8px);z-index:50}.tab{width:auto;min-height:42px;border:1px solid var(--line);background:#202020;color:var(--text);padding:9px 13px;border-radius:10px;font-size:14px}.tab.active{border-color:var(--gold);color:var(--gold2);background:#332a13}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px;box-shadow:var(--shadow)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}select,input,button,textarea{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px;font-size:16px}button{cursor:pointer;touch-action:manipulation}button.primary{background:var(--gold);color:#171717;font-weight:800;border-color:#e8bd3b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.calendar-head button{width:auto;min-width:54px}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day,.dow{min-height:62px;border-radius:12px;border:1px solid var(--line);background:#1f1f1f;padding:7px;font-size:13px;text-align:left}.dow{min-height:auto;text-align:center;color:var(--muted);background:transparent;border:none}.day.today{border-color:var(--blue)}.day.selected{background:#3a3014;border-color:var(--gold)}.badges{display:flex;gap:4px;margin-top:7px;flex-wrap:wrap}.badge{font-size:10px;padding:2px 6px;border-radius:999px}.jra{background:#4a3410;color:#ffd56a}.nar{background:#17345c;color:#8ec5ff}.races{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}.race-card{border:1px solid var(--line);background:#1f1f1f;border-radius:12px;padding:12px;text-align:left}.race-card.active{border-color:var(--gold);background:#342b13}.big{font-size:22px;font-weight:800}.small{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35}.result{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.metric{background:#1f1f1f;border:1px solid var(--line);border-radius:12px;padding:13px}.metric b{font-size:22px}.notice{color:var(--muted);font-size:13px;line-height:1.7}.status{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#1f1f1f;color:var(--muted);font-size:13px;line-height:1.6}.ok{color:#86efac}.warn{color:#fbbf24}.bad{color:#fca5a5}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:620px}th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;white-space:nowrap}th{color:var(--muted);font-size:13px;background:#1d1d1d}.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}.two{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.footerbar{position:fixed;left:0;right:0;bottom:0;background:rgba(20,20,20,.96);border-top:1px solid var(--line);padding:10px 14px;z-index:80}.footerbar .inner{max-width:1180px;margin:auto;display:flex;gap:8px}.footerbar button{min-height:44px}@media(max-width:760px){.grid,.two{grid-template-columns:1fr}.app{padding:14px 10px 90px}h1{font-size:20px}.day{min-height:54px;padding:5px;font-size:12px}.badge{font-size:9px}.tabs{gap:6px}.tab{font-size:13px;padding:8px 10px}.footerbar .inner{display:grid;grid-template-columns:1fr 1fr}}
+:root{--bg:#111;--panel:#1d1d1d;--card:#222;--line:#383838;--txt:#f5f5f5;--muted:#aaa;--gold:#d8a817;--blue:#1f5fbf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:1280px;margin:auto;padding:28px}
+.header{display:flex;gap:14px;align-items:center}
+.logo{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,#f6ce49,#8d6500);display:grid;place-items:center;font-size:28px}
+h1{margin:0;font-size:25px}
+.sub{color:var(--muted);font-size:13px;margin-top:3px}
+.tabs{display:flex;gap:8px;margin:22px 0;border-bottom:1px solid var(--line);padding-bottom:12px}
+.tab{padding:11px 17px;border:1px solid var(--line);background:var(--card);border-radius:9px;color:var(--txt);font-weight:700}
+.tab.active{border-color:var(--gold);color:#ffd95a}
+.main{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.calHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.nav{width:54px;height:44px;border-radius:10px;border:1px solid var(--line);background:#2a2a2a;color:white;font-size:24px}
+.month{font-size:25px;font-weight:900}
+.week,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.week div{text-align:center;color:var(--muted);padding:8px}
+.day{min-height:74px;border:1px solid var(--line);border-radius:10px;background:#1b1b1b;padding:9px;cursor:pointer}
+.day.empty{border:none;background:transparent;cursor:default}
+.day.selected{border-color:var(--gold);background:#40360d}
+.num{font-weight:800}
+.badge{display:inline-block;margin-top:9px;margin-right:4px;padding:3px 8px;border-radius:999px;font-size:11px}
+.jra{background:#6b4d00;color:#ffd96a}.nar{background:#123e78;color:#9fc8ff}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+select,.info{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#2a2a2a;color:var(--txt);font-size:15px}
+.label{color:var(--muted);font-size:12px;margin:8px 0 5px}
+.raceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.race{border:1px solid var(--line);background:#1b1b1b;border-radius:11px;padding:14px;min-height:88px;cursor:pointer}
+.race.active{border-color:var(--gold);background:#3a310c}
+.race b{font-size:25px}
+.race small{display:block;color:var(--muted);margin-top:5px}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(18,18,18,.96);border-top:1px solid var(--line);padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.btn{padding:14px;border-radius:10px;border:1px solid var(--line);background:#2b2b2b;color:white;font-weight:900;font-size:15px}
+.btn.primary{background:var(--gold);color:#111}
+@media(max-width:850px){.main{grid-template-columns:1fr}.raceGrid{grid-template-columns:repeat(2,1fr)}.app{padding:18px 12px 88px}.bottom{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -21,96 +48,279 @@ body{min-height:100vh}.app{max-width:1180px;margin:auto;padding:18px 14px 90px}.
     <div class="logo">🏆</div>
     <div>
       <h1>競馬EV Pro</h1>
-      <div class="sub">GitHub Pages版 / JRA・NAR / カレンダー・開催場・レース選択 / netkeibaブリッジ対応</div>
+      <div class="sub">GitHub Pages版 / JRA・NAR / カレンダー・開催場・レース選択</div>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" data-tab="race">レース選択</button>
-    <button class="tab" data-tab="live">リアルデータ</button>
-    <button class="tab" data-tab="analysis">分析</button>
-    <button class="tab" data-tab="bets">買い目</button>
-    <button class="tab" data-tab="settle">精算</button>
-    <button class="tab" data-tab="settings">設定</button>
+    <button class="tab active">レース選択</button>
+    <button class="tab">リアルデータ</button>
+    <button class="tab">分析</button>
+    <button class="tab">買い目</button>
+    <button class="tab">精算</button>
+    <button class="tab">設定</button>
   </div>
 
-  <section class="panel" id="race">
-    <div class="two">
-      <div>
-        <div class="calendar-head">
-          <button id="prev">‹</button><div class="big" id="monthLabel"></div><button id="next">›</button>
-        </div>
-        <div class="calendar" id="calendar"></div>
+  <div class="main">
+    <section>
+      <div class="calHead">
+        <button class="nav" id="prev">‹</button>
+        <div class="month" id="month"></div>
+        <button class="nav" id="next">›</button>
       </div>
-      <div>
-        <div class="status" id="bridgeStatus">netkeiba側の「🏆 競馬分析アプリへ送る」ボタンから実データを受信できます。</div>
-        <div class="grid" style="margin-top:12px">
-          <div><label>主催</label><select id="type"><option value="JRA">JRA</option><option value="NAR">NAR</option></select></div>
-          <div><label>開催場</label><select id="venue"></select></div>
-          <div><label>距離・コース</label><select id="course"><option>芝1200m</option><option>芝1400m</option><option>芝1600m</option><option>芝1800m</option><option>芝2000m</option><option>ダ1200m</option><option>ダ1400m</option><option>ダ1600m</option><option>ダ1800m</option></select></div>
-          <div><label>馬場状態</label><select id="ground"><option>良</option><option>稍重</option><option>重</option><option>不良</option></select></div>
+      <div class="week"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+      <div class="days" id="days"></div>
+    </section>
+
+    <section>
+      <div class="info" id="status">受信データなし。netkeiba側のブリッジボタンから送ってください。</div>
+
+      <div class="controls">
+        <div>
+          <div class="label">主催</div>
+          <select id="host">
+            <option>JRA</option>
+            <option>NAR</option>
+          </select>
         </div>
-        <h3>レース選択</h3><div class="races" id="races"></div>
+        <div>
+          <div class="label">開催場</div>
+          <select id="place">
+            <option>札幌</option><option>函館</option><option>福島</option><option>新潟</option><option>東京</option><option>中山</option><option>中京</option><option>京都</option><option>阪神</option><option>小倉</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">距離・コース</div>
+          <select id="course">
+            <option>芝1200m</option><option>芝1600m</option><option>芝1800m</option><option>芝2000m</option><option>ダ1200m</option><option>ダ1400m</option><option>ダ1800m</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">馬場状態</div>
+          <select id="ground">
+            <option>良</option><option>稍重</option><option>重</option><option>不良</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <section class="panel" id="live" hidden>
-    <h3>リアルデータ</h3>
-    <div id="liveContent" class="notice">まだデータがありません。netkeibaの出馬表または結果ページでブリッジボタンを押してください。</div>
-  </section>
-
-  <section class="panel" id="analysis" hidden>
-    <h3>期待値分析</h3>
-    <div class="result" id="analysisResult"></div>
-    <div class="table-wrap" id="horseRankWrap" hidden><table><thead><tr><th>順位</th><th>馬番</th><th>馬名</th><th>単勝オッズ</th><th>推定勝率</th><th>EV</th><th>判定</th></tr></thead><tbody id="horseRank"></tbody></table></div>
-  </section>
-
-  <section class="panel" id="bets" hidden>
-    <h3>買い目候補</h3><div class="result" id="betResult"></div>
-  </section>
-
-  <section class="panel" id="settle" hidden>
-    <h3>精算</h3><div id="settleContent" class="notice">結果ページのデータを受信すると、着順・払戻がここに表示されます。</div>
-  </section>
-
-  <section class="panel" id="settings" hidden>
-    <h3>設定</h3>
-    <div class="grid">
-      <div><label>最小EV</label><input id="minEv" type="number" step="0.01" value="1.05"></div>
-      <div><label>基本購入額</label><input id="baseStake" type="number" step="100" value="500"></div>
-      <div><label>Kelly係数</label><input id="kelly" type="number" step="0.05" value="0.35"></div>
-      <div><label>トリガミ回避</label><select id="antiGami"><option value="on">ON</option><option value="off">OFF</option></select></div>
-    </div>
-    <p class="notice">このPages版は表示・保存・分析UIを担当します。netkeibaの取得はUserscript側が担当します。</p>
-  </section>
+      <h2>レース選択</h2>
+      <div class="raceGrid" id="raceGrid"></div>
+    </section>
+  </div>
 </div>
 
-<div class="footerbar"><div class="inner"><button class="primary" id="analyze">分析実行</button><button id="reloadBridge">実データ再読込</button><button id="clearData">受信データ消去</button></div></div>
+<div class="bottom">
+  <button class="btn primary" id="analyze">分析実行</button>
+  <button class="btn" id="reload">実データ再読込</button>
+  <button class="btn" id="clear">受信データ消去</button>
+</div>
 
 <script>
-const JRA=["札幌","函館","福島","新潟","東京","中山","中京","京都","阪神","小倉"];
-const NAR=["門別","盛岡","水沢","浦和","船橋","大井","川崎","金沢","笠松","名古屋","園田","姫路","高知","佐賀"];
-let current=new Date(), selectedDate=new Date(), selectedRace=1, bridgeData=null;
-const $=s=>document.querySelector(s);const $$=s=>Array.from(document.querySelectorAll(s));
-function ymdLocal(d){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
-function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function hasJra(d){return d.getDay()===0||d.getDay()===6} function hasNar(d){return d.getDay()>=1&&d.getDay()<=6}
-function showTab(id){$$('section.panel').forEach(x=>x.hidden=true);$('#'+id).hidden=false;$$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===id))}
-$$('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-function renderCalendar(){const cal=$('#calendar');cal.innerHTML='';['日','月','火','水','木','金','土'].forEach(x=>{const e=document.createElement('div');e.className='dow';e.textContent=x;cal.appendChild(e)});const y=current.getFullYear(),m=current.getMonth();$('#monthLabel').textContent=`${y}年 ${m+1}月`;const first=new Date(y,m,1),last=new Date(y,m+1,0);for(let i=0;i<first.getDay();i++){const b=document.createElement('div');b.className='day';b.style.visibility='hidden';cal.appendChild(b)}for(let d=1;d<=last.getDate();d++){const date=new Date(y,m,d);const e=document.createElement('button');e.className='day';e.innerHTML=`<b>${d}</b><div class="badges"></div>`;const badges=e.querySelector('.badges');if(hasJra(date))badges.innerHTML+='<span class="badge jra">JRA</span>';if(hasNar(date))badges.innerHTML+='<span class="badge nar">NAR</span>';if(ymdLocal(date)===ymdLocal(new Date()))e.classList.add('today');if(ymdLocal(date)===ymdLocal(selectedDate))e.classList.add('selected');e.onclick=()=>{selectedDate=date;renderCalendar();renderRaces()};cal.appendChild(e)}}
-function renderVenue(){const arr=$('#type').value==='JRA'?JRA:NAR;$('#venue').innerHTML=arr.map(v=>`<option>${v}</option>`).join('')}
-function renderRaces(){const box=$('#races');box.innerHTML='';for(let i=1;i<=12;i++){const e=document.createElement('button');e.className='race-card'+(i===selectedRace?' active':'');e.innerHTML=`<div class="big">${i}R</div><div class="small">${esc($('#course').value)}</div><div class="small">${ymdLocal(selectedDate)}</div>`;e.onclick=()=>{selectedRace=i;renderRaces()};box.appendChild(e)}}
-function saveData(d){localStorage.setItem('KEIBA_APP_LAST',JSON.stringify(d||{}))}
-function readBridge(){try{const raw=localStorage.getItem('KEIBA_BRIDGE_LAST')||localStorage.getItem('KEIBA_APP_LAST');bridgeData=raw?JSON.parse(raw):null;if(bridgeData)saveData(bridgeData);renderLive();return bridgeData}catch(e){console.error(e);return null}}
-function renderLive(){const box=$('#liveContent'),st=$('#bridgeStatus');if(!bridgeData){st.innerHTML='受信データなし。netkeiba側のブリッジボタンから送ってください。';box.innerHTML='まだデータがありません。';return}st.innerHTML=`<span class="ok">受信済み</span><br>race_id: ${esc(bridgeData.raceId||'-')} / ${esc(bridgeData.type||'-')} / ${esc(bridgeData.page||'-')}`;if(bridgeData.type){$('#type').value=bridgeData.type;renderVenue()}if(bridgeData.page==='shutuba'){const hs=bridgeData.horses||[];box.innerHTML=`<div class="status">出馬表データを受信しました。${hs.length}頭 / ${esc(bridgeData.url||'')}</div><div class="table-wrap"><table><thead><tr><th>馬番</th><th>馬名</th><th>オッズ</th><th>人気</th></tr></thead><tbody>${hs.map(h=>`<tr><td>${h.horseNo}</td><td>${esc(h.name)}</td><td>${h.odds||'-'}</td><td>${h.popularity||'-'}</td></tr>`).join('')}</tbody></table></div>`}else if(bridgeData.page==='result'){const r=bridgeData.result||{};const ps=r.payouts||[];box.innerHTML=`<div class="status">結果データを受信しました。着順: ${(r.finishOrderHorseNo||[]).join(' → ')||'-'}</div><div class="result">${ps.map(p=>`<div class="metric"><span>${esc(p.type)} ${esc(p.combo||'')}</span><br><b>${Number(p.payout||0).toLocaleString()}円</b></div>`).join('')||'<div class="notice">払戻データなし</div>'}</div>`;renderSettle()}else{box.innerHTML='<div class="notice">未対応ページです。出馬表または結果ページから送信してください。</div>'}}
-function impliedProb(odds){return odds>0?1/odds:0}function fairProbFromOdds(odds,rank){const base=impliedProb(odds);return Math.min(.75,Math.max(.01,base*(1.02+(rank<=3?.08:rank<=6?.03:-.02))))}
-function analyze(){const minEv=Number($('#minEv').value)||1.05,stake=Number($('#baseStake').value)||500;const hs=(bridgeData&&bridgeData.horses&&bridgeData.horses.length)?bridgeData.horses:demoHorses();const ranked=hs.map((h,i)=>{const odds=Number(h.odds)||0;const p=fairProbFromOdds(odds,i+1);const ev=odds*p;return {...h,p,ev,rank:i+1}}).sort((a,b)=>b.ev-a.ev);$('#analysisResult').innerHTML=`<div class="metric"><span>対象</span><br><b>${esc(bridgeData?.type||$('#type').value)}</b><div class="small">${esc($('#venue').value)} ${selectedRace}R</div></div><div class="metric"><span>頭数</span><br><b>${hs.length}</b><div class="small">リアル/サンプル</div></div><div class="metric"><span>最小EV</span><br><b>${minEv.toFixed(2)}</b><div class="small">設定値</div></div><div class="metric"><span>基本購入額</span><br><b>${stake.toLocaleString()}円</b><div class="small">100円単位推奨</div></div>`;$('#horseRankWrap').hidden=false;$('#horseRank').innerHTML=ranked.map((h,i)=>`<tr><td>${i+1}</td><td>${h.horseNo}</td><td>${esc(h.name)}</td><td>${h.odds||'-'}</td><td>${(h.p*100).toFixed(1)}%</td><td>${h.ev.toFixed(2)}</td><td>${h.ev>=minEv?'<span class="ok">候補</span>':'<span class="warn">見送り</span>'}</td></tr>`).join('');renderBets(ranked,minEv,stake);showTab('analysis')}
-function renderBets(ranked,minEv,stake){const top=ranked.filter(h=>h.ev>=minEv).slice(0,5);let html='';if(!top.length){html='<div class="metric"><span>判定</span><br><b>見送り</b><div class="small">EV条件未満</div></div>'}else{html+=top.slice(0,3).map(h=>`<div class="metric"><span>単勝候補</span><br><b>${h.horseNo}</b><div class="small">${esc(h.name)} / EV ${h.ev.toFixed(2)} / ${stake}円</div></div>`).join('');if(top.length>=2)html+=`<div class="metric"><span>ワイド候補</span><br><b>${top[0].horseNo}-${top[1].horseNo}</b><div class="small">安定寄り / トリガミ注意</div></div>`;if(top.length>=3)html+=`<div class="metric"><span>3連複候補</span><br><b>${top[0].horseNo}-${top[1].horseNo}-${top[2].horseNo}</b><div class="small">少額推奨</div></div>`}$('#betResult').innerHTML=html}
-function renderSettle(){const r=bridgeData?.result;if(!r){$('#settleContent').innerHTML='結果ページのデータを受信すると表示されます。';return}const ps=r.payouts||[];$('#settleContent').innerHTML=`<div class="status">race_id: ${esc(bridgeData.raceId||'-')}<br>着順: ${(r.finishOrderHorseNo||[]).join(' → ')||'-'}</div><div class="table-wrap"><table><thead><tr><th>券種</th><th>組番</th><th>払戻</th><th>元テキスト</th></tr></thead><tbody>${ps.map(p=>`<tr><td>${esc(p.type)}</td><td>${esc(p.combo||'-')}</td><td>${Number(p.payout||0).toLocaleString()}円</td><td>${esc((p.raw||'').slice(0,80))}</td></tr>`).join('')}</tbody></table></div>`}
-function demoHorses(){return Array.from({length:12},(_,i)=>({horseNo:i+1,name:`サンプル馬${i+1}`,odds:Number((1.8+i*.9+(i%3)*.7).toFixed(1)),popularity:i+1}))}
-$('#prev').onclick=()=>{current.setMonth(current.getMonth()-1);renderCalendar()};$('#next').onclick=()=>{current.setMonth(current.getMonth()+1);renderCalendar()};$('#type').onchange=()=>{renderVenue();renderRaces()};$('#course').onchange=renderRaces;$('#analyze').onclick=analyze;$('#reloadBridge').onclick=()=>{readBridge();showTab('live')};$('#clearData').onclick=()=>{localStorage.removeItem('KEIBA_BRIDGE_LAST');localStorage.removeItem('KEIBA_APP_LAST');bridgeData=null;renderLive();showTab('live')};
-renderVenue();renderCalendar();renderRaces();readBridge();
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+
+  function pad(n){ return String(n).padStart(2,"0"); }
+
+  function localDateStr(d){
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
+  function todayLocal(){
+    return localDateStr(new Date());
+  }
+
+  function parseDate(str){
+    const [y,m,d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function ymFromDateStr(str){
+    const [y,m] = str.split("-").map(Number);
+    return { y, m };
+  }
+
+  const state = {
+    selectedDate: null,
+    calendarYear: null,
+    calendarMonth: null,
+    selectedRaceNo: 1,
+    host: "JRA",
+    place: "札幌",
+    course: "芝1200m",
+    ground: "良"
+  };
+
+  function save(){
+    localStorage.setItem("keiba_ev_pro_state_v2", JSON.stringify(state));
+  }
+
+  function load(){
+    try{
+      const old = JSON.parse(localStorage.getItem("keiba_ev_pro_state_v2") || "{}");
+      Object.assign(state, old || {});
+    }catch(e){}
+  }
+
+  function initState(){
+    load();
+
+    // 初回だけ今日。以後は絶対に勝手に今日へ戻さない。
+    if(!state.selectedDate){
+      state.selectedDate = todayLocal();
+    }
+
+    if(!state.calendarYear || !state.calendarMonth){
+      const ym = ymFromDateStr(state.selectedDate);
+      state.calendarYear = ym.y;
+      state.calendarMonth = ym.m;
+    }
+
+    $("host").value = state.host || "JRA";
+    $("place").value = state.place || "札幌";
+    $("course").value = state.course || "芝1200m";
+    $("ground").value = state.ground || "良";
+  }
+
+  function hasJRA(dateStr){
+    const d = parseDate(dateStr).getDay();
+    return d === 0 || d === 6;
+  }
+
+  function hasNAR(dateStr){
+    return true;
+  }
+
+  function renderCalendar(){
+    const y = state.calendarYear;
+    const m = state.calendarMonth;
+    $("month").textContent = `${y}年 ${m}月`;
+
+    const first = new Date(y, m - 1, 1);
+    const last = new Date(y, m, 0);
+    const days = $("days");
+    days.innerHTML = "";
+
+    for(let i=0;i<first.getDay();i++){
+      const e = document.createElement("div");
+      e.className = "day empty";
+      days.appendChild(e);
+    }
+
+    for(let day=1; day<=last.getDate(); day++){
+      const dateStr = `${y}-${pad(m)}-${pad(day)}`;
+      const cell = document.createElement("div");
+      cell.className = "day" + (dateStr === state.selectedDate ? " selected" : "");
+      cell.innerHTML = `
+        <div class="num">${day}</div>
+        ${hasJRA(dateStr) ? '<span class="badge jra">JRA</span>' : ""}
+        ${hasNAR(dateStr) ? '<span class="badge nar">NAR</span>' : ""}
+      `;
+      cell.onclick = () => selectDate(dateStr);
+      days.appendChild(cell);
+    }
+  }
+
+  function selectDate(dateStr){
+    state.selectedDate = dateStr;
+
+    const ym = ymFromDateStr(dateStr);
+    state.calendarYear = ym.y;
+    state.calendarMonth = ym.m;
+
+    state.selectedRaceNo = 1;
+
+    save();
+    renderCalendar();
+    renderRaces();
+    updateStatus();
+  }
+
+  function renderRaces(){
+    const grid = $("raceGrid");
+    grid.innerHTML = "";
+
+    for(let i=1;i<=12;i++){
+      const card = document.createElement("div");
+      card.className = "race" + (i === Number(state.selectedRaceNo) ? " active" : "");
+      card.innerHTML = `
+        <b>${i}R</b>
+        <small>${state.course}</small>
+        <small>${state.selectedDate}</small>
+      `;
+      card.onclick = () => selectRace(i);
+      grid.appendChild(card);
+    }
+  }
+
+  function selectRace(no){
+    // 重要：ここで selectedDate を絶対に変更しない
+    state.selectedRaceNo = Number(no);
+    save();
+    renderRaces();
+    updateStatus();
+  }
+
+  function updateStatus(){
+    $("status").textContent =
+      `${state.selectedDate} ${state.place} ${state.selectedRaceNo}R / ${state.host} / ${state.course} / 馬場:${state.ground}`;
+  }
+
+  function moveMonth(delta){
+    let y = state.calendarYear;
+    let m = state.calendarMonth + delta;
+
+    if(m <= 0){ y--; m = 12; }
+    if(m >= 13){ y++; m = 1; }
+
+    state.calendarYear = y;
+    state.calendarMonth = m;
+
+    // 重要：月移動だけでは selectedDate を今日へ戻さない
+    save();
+    renderCalendar();
+  }
+
+  ["host","place","course","ground"].forEach(id=>{
+    $(id).addEventListener("change", e=>{
+      state[id] = e.target.value;
+      save();
+      renderRaces();
+      updateStatus();
+    });
+  });
+
+  $("prev").onclick = () => moveMonth(-1);
+  $("next").onclick = () => moveMonth(1);
+
+  $("analyze").onclick = () => {
+    alert(`${state.selectedDate} ${state.place} ${state.selectedRaceNo}R を分析します。\n※選択日は保持されています。`);
+  };
+
+  $("reload").onclick = () => {
+    updateStatus();
+    alert("再読込しました。選択日は変更していません。");
+  };
+
+  $("clear").onclick = () => {
+    localStorage.removeItem("keiba_ev_pro_state_v2");
+    state.selectedDate = todayLocal();
+    const ym = ymFromDateStr(state.selectedDate);
+    state.calendarYear = ym.y;
+    state.calendarMonth = ym.m;
+    state.selectedRaceNo = 1;
+    save();
+    renderCalendar();
+    renderRaces();
+    updateStatus();
+  };
+
+  initState();
+  renderCalendar();
+  renderRaces();
+  updateStatus();
+})();
 </script>
 </body>
 </html>
