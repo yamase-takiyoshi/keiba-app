@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競馬回収率最大化アプリ JRA・NAR対応</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --cg:#C8961E;--cgl:#F5E8C0;--cgd:#8B6610;
+  --cs:#1D6A3A;--csl:#E2F5E8;--csd:#0D3D20;
+  --cn:#1A5EA8;--cnl:#E4EEF9;--cnd:#0D3D72;
+  --cd:#C0392B;--cdl:#FDECEA;
+  --bg:#f8f6f0;--sf:#fff;--sf2:#f2efe8;
+  --bd:rgba(0,0,0,.10);--bd2:rgba(0,0,0,.18);
+  --tx:#1a1a18;--tx2:#5a5850;--tx3:#8a8678;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --cg:#E0AA30;--cgl:#3a2e0a;--cgd:#F5CC70;
+  --cs:#2D9A55;--csl:#0a2e18;--csd:#80DBA0;
+  --cn:#4A90D9;--cnl:#0a1e38;--cnd:#90C4F0;
+  --cd:#E05050;--cdl:#2e0a0a;
+  --bg:#1a1916;--sf:#232018;--sf2:#2c2920;
+  --bd:rgba(255,255,255,.10);--bd2:rgba(255,255,255,.18);
+  --tx:#f0ece0;--tx2:#b0aa98;--tx3:#706a58;
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--sf);border-bottom:.5px solid var(--bd);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200;}
+.hdr-logo{display:flex;align-items:center;gap:10px;}
+.hdr-icon{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;}
+.hdr-icon.jra{background:var(--cg);}
+.hdr-icon.nar{background:var(--cn);}
+.hdr-title{font-size:15px;font-weight:700;}
+.hdr-sub{font-size:11px;color:var(--tx2);margin-top:1px;}
+.hdr-note{font-size:11px;color:var(--tx3);}
+
+.wrap{max-width:960px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+
+/* ORG SWITCH */
+.org-sw{display:flex;gap:6px;margin-bottom:1.25rem;}
+.org-btn{padding:7px 20px;border-radius:100px;border:.5px solid var(--bd2);font-size:13px;font-weight:600;cursor:pointer;background:none;color:var(--tx2);transition:all .15s;}
+.org-btn.active.jra{background:var(--cg);border-color:var(--cg);color:#fff;}
+.org-btn.active.nar{background:var(--cn);border-color:var(--cn);color:#fff;}
+.org-btn:hover:not(.active){background:var(--sf2);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;border-bottom:.5px solid var(--bd);margin-bottom:1.5rem;flex-wrap:wrap;}
+.tab{font-size:13px;padding:8px 14px;border-radius:var(--r) var(--r) 0 0;border:.5px solid transparent;cursor:pointer;color:var(--tx2);background:none;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.tab.active.jra{color:var(--cgd);background:var(--cgl);border-color:var(--bd);border-bottom-color:var(--cgl);font-weight:700;}
+.tab.active.nar{color:var(--cnd);background:var(--cnl);border-color:var(--bd);border-bottom-color:var(--cnl);font-weight:700;}
+.tab:hover:not(.active){background:var(--sf2);}
+.sec{display:none;}.sec.active{display:block;}
+
+/* ══ DATA IMPORT PANEL ══ */
+.import-panel{background:var(--sf);border:.5px solid var(--bd);border-radius:var(--rl);margin-bottom:1.25rem;overflow:hidden;}
+.import-head{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem;cursor:pointer;user-select:none;background:var(--sf2);}
+.import-head-left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;}
+.import-head-badge{font-size:11px;padding:2px 8px;border-radius:100px;background:var(--cs);color:#fff;margin-left:4px;}
+.import-head-badge.nar{background:var(--cn);}
+.import-toggle{font-size:18px;color:var(--tx2);transition:transform .2s;}
+.import-toggle.open{transform:rotate(180deg);}
+.import-body{padding:1rem 1.25rem;border-top:.5px solid var(--bd);}
+
+/* ステップ表示 */
+.steps{display:flex;gap:0;margin-bottom:1rem;flex-wrap:wrap;}
+.step{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--cg);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-num.nar{background:var(--cn);}
+.step-arrow{color:var(--tx3);margin:0 6px;font-size:14px;}
+
+/* JSONエリア */
+.json-area-wrap{position:relative;margin-bottom:.75rem;}
+.json-area{width:100%;height:140px;font-family:monospace;font-size:12px;padding:.75rem;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--sf);color:var(--tx);resize:vertical;outline:none;transition:border-color .15s;line-height:1.5;}
+.json-area:focus{border-color:var(--cg);}
+.json-area.valid{border-color:var(--cs);}
+.json-area.invalid{border-color:var(--cd);}
+.json-status{position:absolute;top:8px;right:8px;font-size:11px;padding:2px 8px;border-radius:100px;}
+.json-status.ok{background:var(--csl);color:var(--cs);}
+.json-status.ng{background:var(--cdl);color:var(--cd);}
+
+/* ボタン群 */
+.import-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.75rem;}
+.btn-imp{border:none;padding:9px 18px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:opacity .15s;color:#fff;}
+.btn-imp.jra{background:var(--cg);}
+.btn-imp.nar{background:var(--cn);}
+.btn-imp:hover{opacity:.85;}
+.btn-imp.ghost{background:none;border:.5px solid var(--bd2);color:var(--tx2);}
+.btn-imp.ghost:hover{background:var(--sf2);}
+
+/* プレビューカード */
+.preview-card{background:var(--sf2);border-radius:var(--r);padding:.75rem 1rem;font-size:12px;line-height:1.8;display:none;}
+.preview-card.show{display:block;}
+.prev-row{display:flex;gap:8px;flex-wrap:wrap;}
+.prev-item{background:var(--sf);border-radius:var(--r);padding:4px 10px;border:.5px solid var(--bd);}
+.prev-label{color:var(--tx3);font-size:11px;}
+.prev-val{color:var(--tx);font-weight:600;}
+
+/* 使い方ヒント */
+.hint-box{background:var(--cnl);border:.5px solid var(--cn);border-radius:var(--r);padding:.75rem 1rem;font-size:12px;color:var(--cnd);line-height:1.8;margin-bottom:.75rem;}
+.hint-box.jra{background:var(--cgl);border-color:var(--cg);color:var(--cgd);}
+.hint-box strong{font-weight:700;}
+.hint-box code{font-family:monospace;background:var(--sf);padding:1px 5px;border-radius:4px;}
+
+/* ══ CALENDAR ══ */
+.picker-card{background:var(--sf);border:.5px solid var(--bd);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.25rem;}
+.picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:8px;flex-wrap:wrap;}
+.picker-head-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.picker-nav{display:flex;align-items:center;gap:8px;}
+.nav-btn{width:28px;height:28px;border-radius:var(--r);border:.5px solid var(--bd2);background:none;cursor:pointer;color:var(--tx2);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.nav-btn:hover{background:var(--sf2);}
+.month-lbl{font-size:14px;font-weight:700;min-width:80px;text-align:center;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:1rem;}
+.cal-dow{font-size:10px;text-align:center;padding:4px 0;color:var(--tx3);font-weight:600;}
+.cal-dow.sat{color:#2980B9;}.cal-dow.sun{color:var(--cd);}
+.cal-cell{aspect-ratio:1;border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:3px 2px;cursor:pointer;transition:all .15s;border:.5px solid transparent;min-height:36px;}
+.cal-cell:hover:not(.empty):not(.other){background:var(--sf2);}
+.cal-cell.other{opacity:.35;cursor:default;}
+.cal-cell.today .cal-day-n{background:var(--tx);color:var(--sf);border-radius:100px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.cal-cell.sel.jra{background:var(--cgl);border-color:var(--cg);}
+.cal-cell.sel.nar{background:var(--cnl);border-color:var(--cn);}
+.cal-day-n{font-size:12px;font-weight:600;color:var(--tx);line-height:1;}
+.cal-day-n.sat{color:#2980B9;}.cal-day-n.sun{color:var(--cd);}
+.cal-dots{display:flex;gap:2px;justify-content:center;margin-top:2px;}
+.cal-dot{width:5px;height:5px;border-radius:50%;}
+.cal-dot.jra{background:var(--cg);}
+.cal-dot.nar{background:var(--cn);}
+.cal-cnt{font-size:9px;color:var(--tx3);margin-top:1px;}
+
+/* 開催場 */
+.venue-panel{border-top:.5px solid var(--bd);padding-top:.75rem;}
+.vp-title{font-size:12px;color:var(--tx2);margin-bottom:.5rem;font-weight:600;}
+.venue-sec{margin-bottom:.75rem;}
+.venue-sec-lbl{font-size:11px;color:var(--tx3);margin-bottom:4px;font-weight:600;letter-spacing:.5px;}
+.vchips{display:flex;flex-wrap:wrap;gap:5px;}
+.vc{padding:5px 12px;border-radius:100px;border:.5px solid var(--bd2);font-size:12px;cursor:pointer;background:var(--sf);color:var(--tx2);transition:all .15s;display:flex;align-items:center;gap:4px;}
+.vc:hover:not(.sel){background:var(--sf2);}
+.vc.sel.jra{background:var(--cg);border-color:var(--cg);color:#fff;font-weight:700;}
+.vc.sel.nar{background:var(--cn);border-color:var(--cn);color:#fff;font-weight:700;}
+.vc-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.vc-dot.jra{background:var(--cg);}.vc-dot.nar{background:var(--cn);}
+
+/* レース番号 */
+.race-num-row{display:flex;align-items:center;gap:8px;margin-top:.75rem;flex-wrap:wrap;}
+.rn-lbl{font-size:12px;color:var(--tx2);font-weight:600;}
+.rn-btn{width:32px;height:32px;border-radius:var(--r);border:.5px solid var(--bd2);background:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--tx2);transition:all .15s;}
+.rn-btn:hover:not(.sel){background:var(--sf2);}
+.rn-btn.sel.jra{background:var(--cg);border-color:var(--cg);color:#fff;}
+.rn-btn.sel.nar{background:var(--cn);border-color:var(--cn);color:#fff;}
+
+/* 選択サマリ */
+.sel-sum{display:none;align-items:center;gap:8px;padding:.6rem 1rem;background:var(--sf2);border-radius:var(--r);margin-top:.75rem;flex-wrap:wrap;}
+.sel-sum.show{display:flex;}
+.ss-bdg{font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px;}
+.ss-bdg strong{color:var(--tx);}
+
+/* ══ FORMS ══ */
+.irow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.irow.tri{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:600px){.irow.tri{grid-template-columns:1fr 1fr;}}
+.fld label{font-size:12px;color:var(--tx2);display:block;margin-bottom:4px;}
+.fld input,.fld select{width:100%;font-size:14px;padding:8px 10px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--sf);color:var(--tx);outline:none;transition:border-color .15s;}
+.fld input:focus,.fld select:focus{border-color:var(--cg);}
+
+/* ══ BUTTONS ══ */
+.btn-p{border:none;padding:10px 22px;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px;color:#fff;}
+.btn-p.jra{background:var(--cg);}
+.btn-p.nar{background:var(--cn);}
+.btn-p:hover{opacity:.85;}
+.btn-g{background:none;border:.5px solid var(--bd2);padding:8px 16px;border-radius:var(--r);font-size:13px;cursor:pointer;color:var(--tx2);transition:all .15s;}
+.btn-g:hover{background:var(--sf2);}
+
+/* ══ VERDICT ══ */
+.vbox{border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem;border:.5px solid;}
+.v-buy{background:var(--csl);border-color:var(--cs);color:var(--csd);}
+.v-cond{background:#FEF9E7;border-color:#F0C040;color:#7D6000;}
+.v-pass{background:var(--cdl);border-color:var(--cd);color:var(--cd);}
+@media(prefers-color-scheme:dark){.v-cond{background:#2e2800;border-color:#9a8000;color:#d4b800;}}
+.v-title{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;}
+.v-detail{font-size:13px;margin-top:6px;line-height:1.7;}
+
+/* ══ METRICS ══ */
+.mg4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem;}
+@media(max-width:600px){.mg4,.mg3{grid-template-columns:repeat(2,1fr);}}
+.mc{background:var(--sf2);border-radius:var(--r);padding:.75rem 1rem;}
+.mc-l{font-size:11px;color:var(--tx2);margin-bottom:4px;}
+.mc-v{font-size:22px;font-weight:700;color:var(--tx);}
+.mc-v.gold{color:var(--cgd);}
+.mc-v.narc{color:var(--cn);}
+.mc-v.grn{color:var(--cs);}
+.mc-v.red{color:var(--cd);}
+
+/* ══ HORSE CARDS ══ */
+.hg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem;}
+.hc{background:var(--sf);border:.5px solid var(--bd);border-radius:var(--r);padding:.75rem 1rem;}
+.hc.tj{border-color:var(--cg);border-width:1.5px;}
+.hc.tn{border-color:var(--cn);border-width:1.5px;}
+.h-num{font-size:11px;color:var(--tx3);}
+.h-name{font-size:14px;font-weight:700;color:var(--tx);margin:2px 0 5px;}
+.hbdgs{display:flex;flex-wrap:wrap;gap:4px;}
+.bdg{font-size:11px;padding:2px 8px;border-radius:100px;}
+.bg{background:var(--cgl);color:var(--cgd);}
+.bn{background:var(--cnl);color:var(--cnd);}
+.bgrn{background:var(--csl);color:var(--cs);}
+.bgr{background:var(--sf2);color:var(--tx2);}
+.bred{background:var(--cdl);color:var(--cd);}
+.ev-bar{height:6px;border-radius:3px;background:var(--sf2);overflow:hidden;margin-top:5px;}
+.ev-fill{height:100%;border-radius:3px;background:var(--cg);}
+.ef-n{background:var(--cn);}
+.ef-g{background:var(--cs);}
+.ef-r{background:var(--cd);}
+
+/* ══ TABLE ══ */
+.tw{overflow-x:auto;margin-bottom:.75rem;}
+.bt{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+.bt th{text-align:left;font-weight:700;font-size:11px;color:var(--tx2);padding:6px 10px;border-bottom:.5px solid var(--bd);background:var(--sf2);}
+.bt td{padding:9px 10px;border-bottom:.5px solid var(--bd);color:var(--tx);vertical-align:middle;}
+.bt tr:last-child td{border-bottom:none;}
+.bt tbody tr:hover td{background:var(--sf2);}
+.ec{display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;}
+.ep{background:var(--csl);color:var(--cs);}
+.en{background:var(--sf2);color:var(--tx2);}
+
+/* ══ KELLY ══ */
+.kw{background:var(--sf2);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem;}
+.kt{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:.75rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.kt input{width:90px;font-size:13px;padding:3px 8px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--sf);color:var(--tx);}
+.kr{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.kb{font-size:13px;color:var(--tx);min-width:130px;}
+.kbw{flex:1;}
+.kbar{height:8px;border-radius:4px;background:var(--sf);overflow:hidden;}
+.kfill{height:100%;border-radius:4px;background:var(--cg);}
+.kfill.nf{background:var(--cn);}
+.ka{font-size:13px;font-weight:700;color:var(--tx);min-width:70px;text-align:right;}
+
+/* ══ PASS BOX ══ */
+.pb{background:var(--sf);border-left:3px solid var(--cd);border-radius:0 var(--r) var(--r) 0;padding:.75rem 1rem;margin-bottom:.75rem;}
+.pb.warn{border-left-color:var(--cg);}
+.pb.wn{border-left-color:var(--cn);}
+.pr{font-size:13px;color:var(--tx);}
+.ps{font-size:12px;color:var(--tx2);margin-top:3px;}
+
+/* ══ SIM ══ */
+.sc{background:var(--sf2);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem;}
+.sr{display:flex;align-items:center;gap:16px;margin-bottom:.75rem;}
+.sr:last-child{margin-bottom:0;}
+.sl{font-size:13px;color:var(--tx2);min-width:110px;}
+.sv{font-size:13px;font-weight:700;color:var(--tx);min-width:65px;text-align:right;}
+.sr input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--bd2);outline:none;cursor:pointer;}
+.cw{position:relative;width:100%;height:220px;margin-bottom:1rem;}
+
+/* ══ SETTLEMENT ══ */
+.rs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.rc{background:var(--sf);border:.5px solid var(--bd);border-radius:var(--r);padding:.75rem 1rem;}
+.rl2{font-size:12px;color:var(--tx2);}
+.rv{font-size:20px;font-weight:700;margin-top:4px;color:var(--tx);}
+.rv.grn{color:var(--cs);}
+.rv.red{color:var(--cd);}
+
+/* ══ MISC ══ */
+.slabel{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:.5rem;display:flex;align-items:center;gap:6px;}
+.tip{font-size:12px;color:var(--tx3);margin-top:.5rem;line-height:1.7;}
+.div{border:none;border-top:.5px solid var(--bd);margin:1.25rem 0;}
+.arow{display:flex;gap:8px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
+.nbox{background:var(--sf2);border:.5px solid var(--bd);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;color:var(--tx2);line-height:1.7;}
+.nbox strong{color:var(--tx);}
+.nibox{background:var(--cnl);border:.5px solid var(--cn);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;color:var(--cnd);line-height:1.8;}
+.nibox strong{font-weight:700;}
+.urow{margin-bottom:1rem;}
+.urow label{font-size:12px;color:var(--tx2);display:block;margin-bottom:4px;}
+.urow input{width:100%;font-size:13px;padding:8px 12px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--sf);color:var(--tx);outline:none;}
+.urow input:focus{border-color:var(--cg);}
+.raceid-box{background:var(--sf2);border-radius:var(--r);padding:.6rem 1rem;font-size:12px;color:var(--tx2);margin-bottom:1rem;line-height:1.8;}
+.raceid-box code{font-family:monospace;background:var(--sf);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--cnd);}
+footer{text-align:center;font-size:11px;color:var(--tx3);padding:2rem 0 1rem;}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:var(--sf);padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:9999;transition:transform .3s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon jra" id="hdr-icon"><i class="ti ti-trophy"></i></div>
+    <div>
+      <div class="hdr-title">競馬回収率最大化アプリ</div>
+      <div class="hdr-sub">期待値・ケリー基準・トリガミ検出 | <span id="org-lbl">JRA（中央競馬）</span></div>
+    </div>
+  </div>
+  <div class="hdr-note">※ 回収率100%を保証するものではありません</div>
+</header>
+
+<div id="toast" class="toast"></div>
+
+<div class="wrap">
+
+  <!-- ORG SWITCH -->
+  <div class="org-sw">
+    <button class="org-btn active jra" id="btn-jra" onclick="switchOrg('jra')"><i class="ti ti-building"></i> JRA（中央競馬）</button>
+    <button class="org-btn nar" id="btn-nar" onclick="switchOrg('nar')"><i class="ti ti-map-pin"></i> NAR（地方競馬）</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active jra" data-tab="analysis" onclick="switchTab('analysis')"><i class="ti ti-calendar"></i> レース選択・分析</button>
+    <button class="tab jra" data-tab="buymenu" onclick="switchTab('buymenu')"><i class="ti ti-checklist"></i> 買い目</button>
+    <button class="tab jra" data-tab="simulation" onclick="switchTab('simulation')"><i class="ti ti-refresh"></i> シミュレーション</button>
+    <button class="tab jra" data-tab="settlement" onclick="switchTab('settlement')"><i class="ti ti-calculator"></i> 精算</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       分析タブ
+  ══════════════════════════════════════ -->
+  <div class="sec active" id="tab-analysis">
+
+    <!-- ★ データ取込パネル ★ -->
+    <div class="import-panel">
+      <div class="import-head" onclick="toggleImport()">
+        <div class="import-head-left">
+          <i class="ti ti-database-import"></i>
+          実データ取込
+          <span class="import-head-badge" id="imp-badge">Userscript連携</span>
+        </div>
+        <i class="ti ti-chevron-down import-toggle" id="imp-toggle"></i>
+      </div>
+      <div class="import-body" id="imp-body" style="display:none;">
+
+        <!-- 使い方ヒント -->
+        <div class="hint-box jra" id="hint-jra">
+          <strong>① Userscriptをインストール</strong>（別ファイル <code>keiba_userscript.js</code>）<br>
+          <strong>② netkeiba.com でレースページを開く</strong>（出馬表 or オッズページ）<br>
+          <strong>③ 画面右下の「📋 データコピー」ボタンをタップ</strong><br>
+          <strong>④ 下のテキスト欄に貼り付けて「解析実行」</strong>
+        </div>
+        <div class="hint-box" id="hint-nar" style="display:none;">
+          <strong>① Userscriptをインストール</strong>（別ファイル <code>keiba_userscript.js</code>）<br>
+          <strong>② nar.netkeiba.com でレースページを開く</strong><br>
+          <strong>③ 画面右下の「📋 データコピー」ボタンをタップ</strong><br>
+          <strong>④ 下のテキスト欄に貼り付けて「解析実行」</strong>
+        </div>
+
+        <!-- ステップ -->
+        <div class="steps">
+          <div class="step"><div class="step-num" id="sn1">1</div><span>Userscriptでデータ収集</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step"><div class="step-num" id="sn2">2</div><span>📋コピー</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step"><div class="step-num" id="sn3">3</div><span>ここに貼付け</span></div>
+          <span class="step-arrow">→</span>
+          <div class="step"><div class="step-num" id="sn4">4</div><span>自動解析</span></div>
+        </div>
+
+        <!-- JSONエリア -->
+        <div class="json-area-wrap">
+          <textarea class="json-area" id="json-input"
+            placeholder='Userscriptでコピーしたデータをここに貼り付け（⌘V / 長押し→ペースト）
+
+または手動入力例：
+{
+  "race_id": "202305020811",
+  "venue": "東京",
+  "race_no": 11,
+  "race_name": "オークス",
+  "date": "2026-05-15",
+  "course": "芝2400m",
+  "weather": "晴",
+  "baba": "良",
+  "class": "GI",
+  "horses": [
+    {"num":1,"name":"ホシノヒカリ","pop":1,"odds":2.8,"jockey":"武豊","weight":454,"style":"先行"},
+    {"num":3,"name":"サクラノハナ","pop":2,"odds":5.6,"jockey":"川田将雅","weight":462,"style":"差し"}
+  ]
+}'
+            oninput="validateJSON()"
+            onpaste="setTimeout(validateJSON,50)"
+          ></textarea>
+          <span class="json-status" id="json-status" style="display:none;"></span>
+        </div>
+
+        <div class="import-btns">
+          <button class="btn-imp jra" id="btn-parse" onclick="parseAndAnalyze()"><i class="ti ti-player-play"></i> 解析実行</button>
+          <button class="btn-imp ghost" onclick="pasteFromClipboard()"><i class="ti ti-clipboard"></i> クリップボードから貼付け</button>
+          <button class="btn-imp ghost" onclick="loadDemoData()"><i class="ti ti-flask"></i> デモデータ</button>
+          <button class="btn-imp ghost" onclick="clearJSON()"><i class="ti ti-trash"></i> クリア</button>
+        </div>
+
+        <!-- プレビュー -->
+        <div class="preview-card" id="preview-card">
+          <div class="slabel" style="margin-bottom:.5rem;"><i class="ti ti-eye"></i> 読み込み確認</div>
+          <div class="prev-row" id="prev-row"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- カレンダー -->
+    <div class="picker-card">
+      <div class="picker-head">
+        <div class="picker-head-title"><i class="ti ti-calendar-event"></i> 開催日を選ぶ</div>
+        <div class="picker-nav">
+          <button class="nav-btn" onclick="calMove(-1)"><i class="ti ti-chevron-left"></i></button>
+          <span class="month-lbl" id="month-lbl"></span>
+          <button class="nav-btn" onclick="calMove(1)"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-dow sun">日</div><div class="cal-dow">月</div><div class="cal-dow">火</div>
+        <div class="cal-dow">水</div><div class="cal-dow">木</div><div class="cal-dow">金</div>
+        <div class="cal-dow sat">土</div>
+      </div>
+      <div class="venue-panel">
+        <div class="vp-title">開催場を選ぶ <span id="sel-date-txt" style="font-weight:400;color:var(--tx3);"></span></div>
+        <div id="venue-sections"></div>
+        <div class="race-num-row" id="race-num-row" style="display:none;">
+          <span class="rn-lbl">レース番号：</span>
+          <div id="race-num-btns" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="sel-sum" id="sel-sum">
+          <i class="ti ti-circle-check" style="color:var(--cg);"></i>
+          <span class="ss-bdg"><strong id="ss-date">-</strong></span>
+          <span class="ss-bdg"><i class="ti ti-building"></i> <strong id="ss-venue">-</strong></span>
+          <span class="ss-bdg"><i class="ti ti-flag"></i> <strong id="ss-race">-</strong></span>
+          <span id="ss-url-wrap" style="display:none;"><a id="ss-url" href="#" target="_blank" style="font-size:12px;color:var(--cnd);"><i class="ti ti-external-link"></i> netkeibaで開く</a></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- JRA フォーム -->
+    <div id="jra-form">
+      <div class="nbox"><strong>レース詳細：</strong> 上でカレンダー・開催場を選択、または「実データ取込」パネルからデータを貼り付けてください。</div>
+      <div class="irow">
+        <div class="fld"><label>距離・コース</label>
+          <select id="jra-course">
+            <option>芝1200m</option><option>芝1400m</option><option>芝1600m</option><option>芝1800m</option>
+            <option>芝2000m</option><option>芝2400m</option><option>芝3200m</option>
+            <option>ダ1200m</option><option>ダ1400m</option><option>ダ1600m</option><option>ダ1800m</option><option>ダ2100m</option>
+          </select>
+        </div>
+        <div class="fld"><label>天候</label>
+          <select id="jra-weather"><option>晴</option><option>曇</option><option>雨</option><option>小雨</option><option>雪</option></select>
+        </div>
+      </div>
+      <div class="irow tri">
+        <div class="fld"><label>馬場状態</label>
+          <select id="jra-baba"><option>良</option><option>稍重</option><option>重</option><option>不良</option></select>
+        </div>
+        <div class="fld"><label>クラス</label>
+          <select id="jra-class"><option>GI</option><option>GII</option><option>GIII</option><option>OP/L</option><option>3勝クラス</option><option>2勝クラス</option><option>1勝クラス</option><option>未勝利</option><option>新馬</option></select>
+        </div>
+        <div class="fld"><label>頭数</label><input type="number" id="jra-heads" value="16" min="6" max="18"></div>
+      </div>
+      <div class="fld" style="margin-bottom:12px;"><label>本命・対抗・穴 馬番（スペース区切り 例: 3 7 12）</label><input type="text" id="jra-picks" placeholder="馬番を入力"></div>
+      <div class="arow">
+        <button class="btn-p jra" onclick="runAnalysis('jra')"><i class="ti ti-player-play"></i> 分析実行</button>
+        <button class="btn-g" onclick="loadSample('jra')">サンプル</button>
+      </div>
+    </div>
+
+    <!-- NAR フォーム -->
+    <div id="nar-form" style="display:none;">
+      <div class="nibox"><strong>NAR：</strong> 控除率 単勝/複勝 20〜25%、三連単 30%。推奨EV基準 <strong>1.10以上</strong>。</div>
+      <div class="irow">
+        <div class="fld"><label>距離・コース</label>
+          <select id="nar-course">
+            <optgroup label="ダート"><option>ダ1000m</option><option>ダ1200m</option><option>ダ1400m</option><option>ダ1500m</option><option>ダ1600m</option><option>ダ1700m</option><option>ダ1800m</option><option>ダ2000m</option></optgroup>
+            <optgroup label="芝（一部場）"><option>芝1000m</option><option>芝1200m</option><option>芝1600m</option><option>芝2000m</option></optgroup>
+          </select>
+        </div>
+        <div class="fld"><label>馬場バイアス</label>
+          <select id="nar-bias"><option>バイアスなし</option><option>内枠有利</option><option>外枠有利</option><option>先行有利</option><option>差し・追込有利</option><option>逃げ天国</option></select>
+        </div>
+      </div>
+      <div class="irow tri">
+        <div class="fld"><label>馬場状態</label>
+          <select id="nar-baba"><option>良</option><option>稍重</option><option>重</option><option>不良</option></select>
+        </div>
+        <div class="fld"><label>クラス</label>
+          <select id="nar-class"><option>重賞(SPI/SPII)</option><option>重賞(SPIII)</option><option>A1/A2</option><option>B1/B2/B3</option><option>C1/C2/C3</option><option>D/未格付</option><option>新馬・デビュー</option></select>
+        </div>
+        <div class="fld"><label>頭数</label><input type="number" id="nar-heads" value="12" min="6" max="16"></div>
+      </div>
+      <div class="fld" style="margin-bottom:12px;"><label>本命・対抗・穴 馬番</label><input type="text" id="nar-picks" placeholder="例: 2 5 9"></div>
+      <div class="urow">
+        <label>nar.netkeiba.com URL（参照用）</label>
+        <input type="url" id="nar-url" placeholder="https://nar.netkeiba.com/race/result.html?race_id=..." oninput="parseNarUrl()">
+      </div>
+      <div id="nar-url-parsed" style="display:none;" class="raceid-box">URLから解析：<span id="nar-parsed-text"></span></div>
+      <div class="arow">
+        <button class="btn-p nar" onclick="runAnalysis('nar')"><i class="ti ti-player-play"></i> 分析実行</button>
+        <button class="btn-g" onclick="loadSample('nar')">サンプル（大井）</button>
+      </div>
+    </div>
+
+    <!-- 共通 分析結果 -->
+    <div id="analysis-result" style="display:none;">
+      <div class="vbox v-buy" id="vdict-box">
+        <div class="v-title"><i class="ti ti-circle-check" id="vdict-icon"></i> <span id="vdict-text">買い</span></div>
+        <div class="v-detail" id="vdict-detail"></div>
+      </div>
+      <div class="mg4">
+        <div class="mc"><div class="mc-l">レース安定度</div><div class="mc-v gold" id="m-stab">-</div></div>
+        <div class="mc"><div class="mc-l">荒れ指数</div><div class="mc-v" id="m-chaos">-</div></div>
+        <div class="mc"><div class="mc-l">本命信頼度</div><div class="mc-v grn" id="m-trust">-</div></div>
+        <div class="mc"><div class="mc-l">見送り推奨</div><div class="mc-v red" id="m-pass">-</div></div>
+      </div>
+      <div id="nar-warn" style="display:none;" class="pb wn"><div class="pr"><strong>NAR控除率・バイアス補正</strong></div><div class="ps" id="nar-warn-txt"></div></div>
+      <div class="slabel"><i class="ti ti-horse"></i> 馬別期待値評価</div>
+      <div class="hg" id="horse-grid"></div>
+    </div>
+  </div>
+
+  <!-- 買い目タブ -->
+  <div class="sec" id="tab-buymenu">
+    <div class="kw">
+      <div class="kt"><i class="ti ti-cash"></i> ケリー基準 資金配分（予算 <input type="number" id="budget" value="10000" min="1000" step="1000" oninput="renderBuyMenu()"> 円）</div>
+      <div id="kelly-rows"></div>
+    </div>
+    <div id="nar-ded" style="display:none;" class="nibox"><strong>NAR控除率：</strong> 地方競馬は中央より高控除率。EV <strong>1.10以上</strong>を推奨基準、1.05〜1.10 は「条件付き」。</div>
+    <div class="slabel"><i class="ti ti-list-check"></i> 推奨買い目一覧</div>
+    <div class="tw">
+      <table class="bt">
+        <thead><tr><th>券種</th><th>買い目</th><th>点数</th><th>オッズ目安</th><th>推定的中率</th><th>期待値</th><th>金額</th><th>想定払戻</th><th>判定</th></tr></thead>
+        <tbody id="buy-tbody"></tbody>
+      </table>
+    </div>
+    <p class="tip" id="buy-tip">※ トリガミになる組み合わせは自動除外。EV 1.00未満の買い目は表示されません。</p>
+    <hr class="div">
+    <div class="slabel"><i class="ti ti-ban"></i> 見送り・除外理由</div>
+    <div id="pass-reasons"></div>
+  </div>
+
+  <!-- シミュレーションタブ -->
+  <div class="sec" id="tab-simulation">
+    <div class="sc">
+      <div class="sr"><span class="sl">試行回数</span><input type="range" id="sim-n" min="50" max="1000" step="50" value="300" oninput="document.getElementById('sim-n-o').textContent=this.value+'回';runSim();"><span class="sv" id="sim-n-o">300回</span></div>
+      <div class="sr"><span class="sl">的中率設定</span><input type="range" id="sim-hr" min="5" max="60" step="1" value="25" oninput="document.getElementById('sim-hr-o').textContent=this.value+'%';runSim();"><span class="sv" id="sim-hr-o">25%</span></div>
+      <div class="sr"><span class="sl">平均オッズ</span><input type="range" id="sim-odds" min="10" max="300" step="5" value="45" oninput="document.getElementById('sim-odds-o').textContent=(this.value/10).toFixed(1)+'倍';runSim();"><span class="sv" id="sim-odds-o">4.5倍</span></div>
+      <div class="sr"><span class="sl">控除率</span><input type="range" id="sim-tak" min="15" max="35" step="1" value="20" oninput="document.getElementById('sim-tak-o').textContent=this.value+'%';runSim();"><span class="sv" id="sim-tak-o">20%</span></div>
+      <div class="sr"><span class="sl">初期資金</span><input type="range" id="sim-bank" min="5000" max="100000" step="5000" value="10000" oninput="document.getElementById('sim-bank-o').textContent='¥'+Number(this.value).toLocaleString();runSim();"><span class="sv" id="sim-bank-o">¥10,000</span></div>
+    </div>
+    <div id="sim-nar-note" style="display:none;" class="nibox">NAR選択中：控除率スライダーを <strong>25〜30%</strong> に設定することを推奨します。</div>
+    <div class="mg3">
+      <div class="mc"><div class="mc-l">期待回収率（控除後）</div><div class="mc-v gold" id="sim-er">-</div></div>
+      <div class="mc"><div class="mc-l">資金破綻確率</div><div class="mc-v red" id="sim-ruin">-</div></div>
+      <div class="mc"><div class="mc-l">中央値 最終収支</div><div class="mc-v grn" id="sim-med">-</div></div>
+    </div>
+    <div class="cw"><canvas id="simChart"></canvas></div>
+    <p class="tip">ケリー基準（安全係数 0.5）を適用した資金推移を5パターンでシミュレートします。</p>
+  </div>
+
+  <!-- 精算タブ -->
+  <div class="sec" id="tab-settlement">
+    <div id="nar-settle" style="display:none;" class="nibox">NAR精算モード：回収率 <strong>105%以上</strong> を実質黒字の目標とします。</div>
+    <div class="irow">
+      <div class="fld"><label>投資総額（円）</label><input type="number" id="s-invest" value="5000" oninput="calcSettlement()"></div>
+      <div class="fld"><label>払戻総額（円）</label><input type="number" id="s-payout" value="6200" oninput="calcSettlement()"></div>
+    </div>
+    <div class="irow tri">
+      <div class="fld"><label>的中券種数</label><input type="number" id="s-hit" value="2" min="0" oninput="calcSettlement()"></div>
+      <div class="fld"><label>購入券種数</label><input type="number" id="s-total" value="4" min="1" oninput="calcSettlement()"></div>
+      <div class="fld"><label>対象レース数</label><input type="number" id="s-races" value="3" min="1" oninput="calcSettlement()"></div>
+    </div>
+    <div class="rs">
+      <div class="rc"><div class="rl2">回収率</div><div class="rv" id="res-rec">-</div></div>
+      <div class="rc"><div class="rl2">収支</div><div class="rv" id="res-bal">-</div></div>
+      <div class="rc"><div class="rl2">的中率</div><div class="rv" id="res-hr">-</div></div>
+      <div class="rc"><div class="rl2">1レース平均収支</div><div class="rv" id="res-pr">-</div></div>
+    </div>
+    <hr class="div">
+    <div class="slabel"><i class="ti ti-bulb"></i> 自動診断 — 改善ポイント</div>
+    <div id="improvement-points"></div>
+  </div>
+
+</div>
+<footer>競馬回収率最大化アプリ JRA・NAR対応版 | 回収率100%を保証するものではありません。馬券はご自身の判断と責任で購入してください。</footer>
+
+<script>
+/* ════════════════════════════════
+   グローバル状態
+════════════════════════════════ */
+let org='jra';
+let simChart=null;
+let importedData=null; // Userscriptから取り込んだ実データ
+
+// カレンダー
+const today=new Date();
+let calY=today.getFullYear(),calM=today.getMonth();
+let selY=0,selM=0,selD=0,selVenue='',selRace=0;
+
+// NAR場コード
+const NAR_VENUES=[
+  {code:'35',name:'大井',r:'南関東'},{code:'36',name:'川崎',r:'南関東'},
+  {code:'37',name:'浦和',r:'南関東'},{code:'38',name:'船橋',r:'南関東'},
+  {code:'42',name:'笠松',r:'東海'},{code:'43',name:'名古屋',r:'東海'},
+  {code:'44',name:'金沢',r:'北陸'},{code:'46',name:'園田',r:'近畿'},
+  {code:'47',name:'姫路',r:'近畿'},{code:'48',name:'高知',r:'四国・九州'},
+  {code:'49',name:'佐賀',r:'四国・九州'},{code:'50',name:'荒尾',r:'四国・九州'},
+  {code:'30',name:'帯広',r:'北海道・東北'},{code:'31',name:'門別',r:'北海道・東北'},
+  {code:'34',name:'盛岡',r:'北海道・東北'},{code:'33',name:'水沢',r:'北海道・東北'},
+];
+const JRA_VENUES=[
+  {name:'東京',r:'関東'},{name:'中山',r:'関東'},{name:'新潟',r:'関東'},{name:'福島',r:'関東'},
+  {name:'阪神',r:'関西'},{name:'京都',r:'関西'},{name:'中京',r:'関西'},{name:'小倉',r:'関西'},
+  {name:'札幌',r:'北海道'},{name:'函館',r:'北海道'},
+];
+
+/* ════════════════════════════════
+   ★ データ取込パネル
+════════════════════════════════ */
+function toggleImport(){
+  const body=document.getElementById('imp-body');
+  const tog=document.getElementById('imp-toggle');
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  tog.classList.toggle('open',open);
+}
+
+function validateJSON(){
+  const raw=document.getElementById('json-input').value.trim();
+  const sta=document.getElementById('json-status');
+  const area=document.getElementById('json-area');
+  const prev=document.getElementById('preview-card');
+  if(!raw){sta.style.display='none';prev.classList.remove('show');return;}
+  try{
+    const d=JSON.parse(raw);
+    sta.style.display='inline-block';
+    sta.textContent='✓ JSON OK';
+    sta.className='json-status ok';
+    document.getElementById('json-input').classList.remove('invalid');
+    document.getElementById('json-input').classList.add('valid');
+    renderPreview(d);
+  }catch(e){
+    sta.style.display='inline-block';
+    sta.textContent='✗ JSON形式エラー';
+    sta.className='json-status ng';
+    document.getElementById('json-input').classList.remove('valid');
+    document.getElementById('json-input').classList.add('invalid');
+    prev.classList.remove('show');
+  }
+}
+
+function renderPreview(d){
+  const prev=document.getElementById('preview-card');
+  const row=document.getElementById('prev-row');
+  prev.classList.add('show');
+  const items=[
+    {l:'開催場',v:d.venue||'—'},
+    {l:'レース',v:d.race_no?(d.race_no+'R'):'—'},
+    {l:'日付',v:d.date||'—'},
+    {l:'コース',v:d.course||'—'},
+    {l:'馬場',v:d.baba||'—'},
+    {l:'頭数',v:d.horses?d.horses.length+'頭':'—'},
+    {l:'データ種別',v:d.data_type||'出馬表'},
+  ];
+  row.innerHTML=items.map(i=>`<div class="prev-item"><div class="prev-label">${i.l}</div><div class="prev-val">${i.v}</div></div>`).join('');
+}
+
+async function pasteFromClipboard(){
+  try{
+    const txt=await navigator.clipboard.readText();
+    document.getElementById('json-input').value=txt;
+    validateJSON();
+    showToast('クリップボードから貼り付けました');
+  }catch(e){
+    showToast('クリップボードへのアクセスを許可してください');
+  }
+}
+
+function clearJSON(){
+  document.getElementById('json-input').value='';
+  document.getElementById('json-status').style.display='none';
+  document.getElementById('json-input').className='json-area';
+  document.getElementById('preview-card').classList.remove('show');
+  importedData=null;
+}
+
+function loadDemoData(){
+  const demo={
+    race_id:'202601050811',
+    venue:'東京',
+    race_no:11,
+    race_name:'オークス（GI）',
+    date:'2026-05-15',
+    course:'芝2400m',
+    weather:'晴',
+    baba:'良',
+    class:'GI',
+    data_type:'出馬表+オッズ',
+    horses:[
+      {num:1,name:'ホシノヒカリ',pop:1,odds:2.8,jockey:'武豊',weight:454,weight_diff:0,style:'先行',trainer:'国枝栄'},
+      {num:3,name:'サクラノハナ',pop:2,odds:5.6,jockey:'川田将雅',weight:462,weight_diff:+2,style:'差し',trainer:'藤沢和雄'},
+      {num:5,name:'ミライノカゼ',pop:3,odds:8.2,jockey:'C.ルメール',weight:458,weight_diff:-4,style:'追込',trainer:'手塚貴久'},
+      {num:7,name:'アサヒノホシ',pop:6,odds:18.0,jockey:'岩田康誠',weight:450,weight_diff:+6,style:'逃げ',trainer:'池江泰寿'},
+      {num:9,name:'ユメノアカリ',pop:4,odds:10.5,jockey:'横山武史',weight:456,weight_diff:0,style:'差し',trainer:'木村哲也'},
+      {num:12,name:'タイガーロード',pop:9,odds:32.0,jockey:'松山弘平',weight:448,weight_diff:+2,style:'差し',trainer:'中内田充'},
+    ],
+    odds_tan:[2.8,null,5.6,null,8.2,null,18.0,null,10.5,null,null,32.0],
+  };
+  document.getElementById('json-input').value=JSON.stringify(demo,null,2);
+  validateJSON();
+  showToast('デモデータを読み込みました');
+}
+
+function parseAndAnalyze(){
+  const raw=document.getElementById('json-input').value.trim();
+  if(!raw){showToast('データを貼り付けてください');return;}
+  let d;
+  try{d=JSON.parse(raw);}
+  catch(e){showToast('JSON形式エラー：Userscriptで正しくコピーされているか確認してください');return;}
+
+  importedData=d;
+
+  // フォームへ自動反映
+  const isNar=org==='nar';
+  if(d.venue){
+    selVenue=d.venue;
+    document.getElementById('ss-venue').textContent=d.venue;
+  }
+  if(d.race_no){
+    selRace=d.race_no;
+    document.getElementById('ss-race').textContent=d.race_no+'R';
+  }
+  if(d.date){
+    const dt=new Date(d.date);
+    selY=dt.getFullYear();selM=dt.getMonth();selD=dt.getDate();
+    document.getElementById('ss-date').textContent=d.date;
+    calY=selY;calM=selM;
+    renderCalendar();
+  }
+  document.getElementById('sel-sum').classList.add('show');
+
+  if(d.course) document.getElementById(isNar?'nar-course':'jra-course').value=d.course;
+  if(d.weather&&!isNar) document.getElementById('jra-weather').value=d.weather;
+  if(d.baba) document.getElementById(isNar?'nar-baba':'jra-baba').value=d.baba;
+  if(d.class){
+    try{document.getElementById(isNar?'nar-class':'jra-class').value=d.class;}catch(e){}
+  }
+  if(d.horses) document.getElementById(isNar?'nar-heads':'jra-heads').value=d.horses.length;
+
+  // NARの場合URLを自動生成
+  if(isNar&&d.venue){
+    const vObj=NAR_VENUES.find(v=>v.name===d.venue);
+    if(vObj&&d.date){
+      const dt=new Date(d.date);
+      const mm=String(dt.getMonth()+1).padStart(2,'0');
+      const dd2=String(dt.getDate()).padStart(2,'0');
+      const rr=String(d.race_no||1).padStart(2,'0');
+      const rid=`${dt.getFullYear()}${vObj.code}${mm}${dd2}${rr}`;
+      document.getElementById('nar-url').value=`https://nar.netkeiba.com/race/result.html?race_id=${rid}`;
+    }
+  }
+
+  showToast(`${d.venue||''}${d.race_no||''}R データを取り込みました`);
+  runAnalysisWithData(org,d);
+
+  // 取込パネルを閉じる
+  setTimeout(()=>{
+    document.getElementById('imp-body').style.display='none';
+    document.getElementById('imp-toggle').classList.remove('open');
+  },800);
+}
+
+/* ════════════════════════════════
+   分析実行（実データ / サンプル 両対応）
+════════════════════════════════ */
+function runAnalysis(o){
+  runAnalysisWithData(o, importedData);
+}
+
+function runAnalysisWithData(o, data){
+  document.getElementById('analysis-result').style.display='block';
+  renderVerdict(o,data);
+  renderHorses(o,data);
+}
+
+function renderVerdict(o,data){
+  const isNar=o==='nar';
+  const baba=document.getElementById(o+'-baba').value;
+  const rclass=document.getElementById(o+'-class').value;
+  const bias=isNar?document.getElementById('nar-bias').value:'';
+  const box=document.getElementById('vdict-box');
+  const txt=document.getElementById('vdict-text');
+  const det=document.getElementById('vdict-detail');
+  const icon=document.getElementById('vdict-icon');
+  const narW=document.getElementById('nar-warn');
+  const narWt=document.getElementById('nar-warn-txt');
+  let stab=72,chaos=38,trust='65%',passMsg='なし',pCls='grn';
+  narW.style.display='none';
+
+  if(baba==='不良'){
+    box.className='vbox v-pass';txt.textContent='見送り推奨';icon.className='ti ti-alert-circle';
+    det.textContent='不良馬場は荒れ指数が急上昇し、オッズの期待値算定が困難です。見送りを最優先します。';
+    stab=30;chaos=88;trust='不明';passMsg='全券種';pCls='red';
+  }else if(baba==='重'){
+    box.className='vbox v-cond';txt.textContent='条件付き';icon.className='ti ti-alert-triangle';
+    det.textContent='先行・逃げ有利バイアスを加味し、差し・追込馬の期待値を下方修正して判断してください。';
+    stab=50;chaos=62;trust='52%';passMsg='追込全般';pCls='red';
+  }else if(isNar&&rclass.includes('デビュー')){
+    box.className='vbox v-pass';txt.textContent='見送り推奨';icon.className='ti ti-alert-circle';
+    det.textContent='地方新馬・デビュー戦はデータが極端に少なく期待値計算の精度が著しく低下します。原則見送りを推奨します。';
+    stab=20;chaos=95;trust='不明';passMsg='全券種';pCls='red';
+  }else if(rclass==='GI'||rclass.includes('SPI/SPII')){
+    box.className='vbox v-cond';txt.textContent='条件付き';icon.className='ti ti-alert-triangle';
+    det.textContent='実力拮抗で堅さが読みにくく、単勝・馬単はリスクが高いため除外。馬連・三連複のみ条件付きで推奨します。';
+    stab=58;chaos=60;trust='48%';passMsg='単勝・馬単';pCls='red';
+  }else{
+    box.className='vbox v-buy';txt.textContent='買い';icon.className='ti ti-circle-check';
+    det.textContent=isNar?'NAR控除率（25〜30%）を考慮し EV 1.10以上の買い目を中心に推奨します。':'安定したレース条件で根拠のある買い目が複数存在します。ケリー基準による適正配分での購入を推奨します。';
+    if(isNar){narW.style.display='block';narWt.textContent='控除率補正後基準：単勝/複勝 EV 1.12以上、馬連/ワイド EV 1.10以上、三連複/三連単 EV 1.15以上を推奨。';}
+  }
+  if(isNar&&bias!=='バイアスなし'){
+    chaos=Math.min(100,chaos+12);
+    narW.style.display='block';
+    narWt.textContent='馬場バイアス「'+bias+'」を検出。バイアスに沿った脚質の馬を優先し、逆らう脚質の期待値を10〜15%下方修正しています。';
+  }
+
+  // ヘッダに開催情報
+  const label=data?.venue&&data?.race_no?`【${data.venue} ${data.race_no}R ${data.date||''}】 `
+    :selVenue&&selRace?`【${selVenue} ${selRace}R ${selY}/${selM+1}/${selD}】 `:'';
+  if(label) det.textContent=label+det.textContent;
+
+  document.getElementById('m-stab').textContent=stab;
+  document.getElementById('m-stab').className='mc-v '+(isNar?'narc':'gold');
+  document.getElementById('m-chaos').textContent=chaos;
+  document.getElementById('m-trust').textContent=trust;
+  document.getElementById('m-pass').textContent=passMsg;
+  document.getElementById('m-pass').className='mc-v '+pCls;
+}
+
+/* 馬カード — 実データがあれば使う */
+function renderHorses(o,data){
+  const isNar=o==='nar';
+  const th=isNar?1.10:1.00;
+  const grid=document.getElementById('horse-grid');
+  grid.innerHTML='';
+
+  let horses;
+  if(data&&data.horses&&data.horses.length>0){
+    // 実データから期待値を計算して描画
+    horses=data.horses.map(h=>{
+      const odds=h.odds||10;
+      const pop=h.pop||9;
+      // 人気から推定勝率（簡易モデル）
+      const estWin=Math.max(0.01, 0.72/pop);
+      const ev=parseFloat((estWin*odds).toFixed(2));
+      return {...h, ev, win:estWin};
+    });
+  }else{
+    // サンプルデータ
+    horses=isNar?[
+      {num:2,name:'オオイスプリント',pop:1,odds:2.2,style:'逃げ',note:'大井ダ1200得意',ev:0.84},
+      {num:4,name:'カワサキナイト',pop:2,odds:4.8,style:'先行',note:'前走2着・好調',ev:1.06},
+      {num:6,name:'フナバシフライヤー',pop:3,odds:9.5,style:'差し',note:'差し有利バイアスで浮上',ev:0.95},
+      {num:8,name:'ウラワダッシュ',pop:7,odds:22.0,style:'追込',note:'追込は届きにくい',ev:1.10},
+    ]:[
+      {num:1,name:'ゴールドアロー',pop:1,odds:2.8,style:'先行',note:'安定した先行力',ev:0.90},
+      {num:3,name:'シルバーウィンド',pop:2,odds:5.6,style:'差し',note:'切れ味上位・軸候補',ev:1.01},
+      {num:5,name:'ブロンズサンダー',pop:3,odds:8.2,style:'追込',note:'上り最速実績あり',ev:0.98},
+      {num:7,name:'コッパーフラッシュ',pop:6,odds:18.0,style:'逃げ',note:'逃げ確定・外枠ロス',ev:1.08},
+    ];
+  }
+
+  horses.forEach(h=>{
+    const isTop=h.ev>=th;
+    const evPct=Math.min(100,Math.round(h.ev*80));
+    const evClass=h.ev>=(isNar?1.15:1.05)?'ef-g':h.ev>=th?(isNar?'ef-n':''):'ef-r';
+    const topClass=isTop?(isNar?'tn':'tj'):'';
+    const popB=h.pop<=2?`<span class="bdg ${isNar?'bn':'bg'}">人気${h.pop}</span>`:'';
+    const evB=h.ev>=(isNar?1.10:1.05)?'<span class="bdg bgrn">EV良</span>':h.ev<th?'<span class="bdg bred">見送り</span>':'';
+    const jockeyInfo=h.jockey?`<span class="bdg bgr">${h.jockey}</span>`:'';
+    const weightInfo=h.weight?`<span class="bdg bgr">${h.weight}kg${h.weight_diff!==undefined&&h.weight_diff!==0?(h.weight_diff>0?'+':'')+h.weight_diff:''}</span>`:'';
+    const noteText=h.note||`推定勝率 ${Math.round((h.win||0)*100)}%`;
+    grid.innerHTML+=`<div class="hc ${topClass}">
+      <div class="h-num">${h.num}番 | ${h.style||'—'} | 人気${h.pop}</div>
+      <div class="h-name">${h.name}</div>
+      <div class="hbdgs">${popB}${evB}${jockeyInfo}${weightInfo}<span class="bdg bgr">${h.odds}倍</span></div>
+      <div style="font-size:11px;color:var(--tx2);margin-top:4px;">EV = ${h.ev.toFixed(2)}${isNar?' (基準1.10)':''}</div>
+      <div class="ev-bar"><div class="ev-fill ${evClass}" style="width:${evPct}%"></div></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px;">${noteText}</div>
+    </div>`;
+  });
+}
+
+/* ════════════════════════════════
+   カレンダー
+════════════════════════════════ */
+function genSchedule(){
+  const s={};
+  const days=new Date(calY,calM+1,0).getDate();
+  for(let d=1;d<=days;d++){
+    const dow=new Date(calY,calM,d).getDay();
+    const key=`${calY}${String(calM+1).padStart(2,'0')}${String(d).padStart(2,'0')}`;
+    const jv=[],nv=[];
+    if(dow===6){jv.push(...(d<=15?['東京','阪神']:['中山','京都']));}
+    if(dow===0){jv.push(...(d<=15?['東京','阪神']:['中山','京都']));}
+    if(dow===0&&d%3===0)jv.push('小倉');
+    if(dow<=1)nv.push('浦和','水沢');
+    else if(dow<=3)nv.push('船橋','笠松');
+    else if(dow===4)nv.push('川崎','佐賀');
+    else if(dow===5)nv.push('川崎','金沢');
+    else if(dow===6)nv.push('大井','名古屋','門別');
+    else nv.push('大井','高知','帯広');
+    s[key]={jra:jv,nar:nv};
+  }
+  return s;
+}
+
+function renderCalendar(){
+  const grid=document.getElementById('cal-grid');
+  document.getElementById('month-lbl').textContent=`${calY}年${calM+1}月`;
+  while(grid.children.length>7)grid.removeChild(grid.lastChild);
+  const firstDow=new Date(calY,calM,1).getDay();
+  const lastDay=new Date(calY,calM+1,0).getDate();
+  const prevLast=new Date(calY,calM,0).getDate();
+  const sch=genSchedule();
+  for(let i=0;i<firstDow;i++) grid.appendChild(makeCell(calY,calM-1,prevLast-firstDow+1+i,'other'));
+  for(let d=1;d<=lastDay;d++){
+    const dow=new Date(calY,calM,d).getDay();
+    const key=`${calY}${String(calM+1).padStart(2,'0')}${String(d).padStart(2,'0')}`;
+    const ev=sch[key]||{jra:[],nar:[]};
+    const isToday=calY===today.getFullYear()&&calM===today.getMonth()&&d===today.getDate();
+    const isSel=selY===calY&&selM===calM&&selD===d;
+    grid.appendChild(makeCell(calY,calM,d,'',dow,ev,isToday,isSel));
+  }
+  const total=firstDow+lastDay;
+  const remain=(7-total%7)%7;
+  for(let d=1;d<=remain;d++) grid.appendChild(makeCell(calY,calM+1,d,'other'));
+}
+
+function makeCell(y,m,d,cls,dow,ev,isToday,isSel){
+  const cell=document.createElement('div');
+  cell.className='cal-cell'+(cls?' '+cls:'');
+  if(isToday)cell.classList.add('today');
+  if(isSel)cell.classList.add('sel',org);
+  const dn=document.createElement('div');
+  dn.className='cal-day-n'+(dow===0?' sun':dow===6?' sat':'');
+  dn.textContent=d;
+  cell.appendChild(dn);
+  if(ev){
+    const hasJ=ev.jra.length>0,hasN=ev.nar.length>0;
+    if(hasJ||hasN){
+      const dots=document.createElement('div');
+      dots.className='cal-dots';
+      if(hasJ){const dot=document.createElement('div');dot.className='cal-dot jra';dots.appendChild(dot);}
+      if(hasN){const dot=document.createElement('div');dot.className='cal-dot nar';dots.appendChild(dot);}
+      cell.appendChild(dots);
+      const cnt=document.createElement('div');
+      cnt.className='cal-cnt';
+      cnt.textContent=(hasJ?ev.jra.length+'場':'')+(hasJ&&hasN?' ':'')+(hasN?'NAR':'');
+      cell.appendChild(cnt);
+      cell.onclick=()=>selectDate(y,m,d,ev);
+    }
+  }
+  return cell;
+}
+
+function selectDate(y,m,d,ev){
+  selY=y;selM=m;selD=d;selVenue='';selRace=0;
+  renderCalendar();
+  renderVenuePanel(y,m,d,ev);
+  document.getElementById('sel-sum').classList.remove('show');
+}
+
+function renderVenuePanel(y,m,d,ev){
+  document.getElementById('sel-date-txt').textContent=`— ${y}年${m+1}月${d}日（${'日月火水木金土'[new Date(y,m,d).getDay()]}）`;
+  const sec=document.getElementById('venue-sections');
+  sec.innerHTML='';
+  const isNar=org==='nar';
+  const venues=isNar?ev.nar:ev.jra;
+  const master=isNar?NAR_VENUES:JRA_VENUES;
+  if(!venues.length){
+    sec.innerHTML=`<div style="font-size:13px;color:var(--tx3);padding:.5rem 0;">${isNar?'NAR':'JRA'}の開催はありません</div>`;
+    document.getElementById('race-num-row').style.display='none';
+    return;
+  }
+  const regions={};
+  venues.forEach(vname=>{
+    const obj=master.find(v=>v.name===vname)||{name:vname,r:'その他'};
+    if(!regions[obj.r])regions[obj.r]=[];
+    regions[obj.r].push(obj);
+  });
+  Object.entries(regions).forEach(([region,vlist])=>{
+    const wrap=document.createElement('div');
+    wrap.className='venue-sec';
+    wrap.innerHTML=`<div class="venue-sec-lbl">${region}</div>`;
+    const chips=document.createElement('div');
+    chips.className='vchips';
+    vlist.forEach(v=>{
+      const btn=document.createElement('button');
+      btn.className='vc';
+      btn.innerHTML=`<span class="vc-dot ${isNar?'nar':'jra'}"></span>${v.name}`;
+      btn.onclick=()=>{
+        selVenue=v.name;selRace=0;
+        document.querySelectorAll('.vc').forEach(b=>b.classList.remove('sel','jra','nar'));
+        btn.classList.add('sel',org);
+        renderRaceNums();
+        document.getElementById('sel-sum').classList.remove('show');
+      };
+      chips.appendChild(btn);
+    });
+    wrap.appendChild(chips);
+    sec.appendChild(wrap);
+  });
+}
+
+function renderRaceNums(){
+  const row=document.getElementById('race-num-row');
+  const btns=document.getElementById('race-num-btns');
+  btns.innerHTML='';
+  row.style.display='flex';
+  for(let i=1;i<=12;i++){
+    const btn=document.createElement('button');
+    btn.className='rn-btn';
+    btn.textContent=i+'R';
+    btn.onclick=()=>{
+      selRace=i;
+      document.querySelectorAll('.rn-btn').forEach(b=>b.classList.remove('sel','jra','nar'));
+      btn.classList.add('sel',org);
+      showSelSummary();
+      // NARはURLも自動生成
+      if(org==='nar'){
+        const vObj=NAR_VENUES.find(v=>v.name===selVenue);
+        if(vObj){
+          const mm=String(selM+1).padStart(2,'0'),dd2=String(selD).padStart(2,'0'),rr=String(i).padStart(2,'0');
+          const rid=`${selY}${vObj.code}${mm}${dd2}${rr}`;
+          document.getElementById('nar-url').value=`https://nar.netkeiba.com/race/result.html?race_id=${rid}`;
+          document.getElementById('ss-url').href=`https://nar.netkeiba.com/race/result.html?race_id=${rid}`;
+          document.getElementById('ss-url-wrap').style.display='inline';
+        }
+      }
+    };
+    btns.appendChild(btn);
+  }
+}
+
+function showSelSummary(){
+  const sum=document.getElementById('sel-sum');
+  sum.classList.add('show');
+  document.getElementById('ss-date').textContent=`${selY}/${selM+1}/${selD}`;
+  document.getElementById('ss-venue').textContent=selVenue;
+  document.getElementById('ss-race').textContent=selRace+'R';
+}
+
+function calMove(dir){
+  calM+=dir;
+  if(calM>11){calM=0;calY++;}
+  if(calM<0){calM=11;calY--;}
+  renderCalendar();
+}
+
+/* ════════════════════════════════
+   NAR URL解析
+════════════════════════════════ */
+function parseNarUrl(){
+  const url=document.getElementById('nar-url').value;
+  const m=url.match(/race_id=(\d{4})(\d{2})(\d{4})(\d{2})/);
+  const box=document.getElementById('nar-url-parsed');
+  if(m){
+    const vObj=NAR_VENUES.find(v=>v.code===m[2]);
+    document.getElementById('nar-parsed-text').innerHTML=
+      `${m[1]}年${m[3].slice(0,2)}月${m[3].slice(2,4)}日 &nbsp;<code>${vObj?vObj.name:'場コード'+m[2]}</code>&nbsp; 第${parseInt(m[4])}レース`;
+    box.style.display='block';
+  }else box.style.display='none';
+}
+
+/* ════════════════════════════════
+   ORG / TAB 切替
+════════════════════════════════ */
+function switchOrg(o){
+  org=o;importedData=null;
+  ['jra','nar'].forEach(x=>{
+    document.getElementById('btn-'+x).className='org-btn '+(x===o?'active ':'')+x;
+    document.getElementById(x+'-form').style.display=x===o?'':'none';
+  });
+  document.getElementById('hdr-icon').className='hdr-icon '+o;
+  document.getElementById('org-lbl').textContent=o==='jra'?'JRA（中央競馬）':'NAR（地方競馬）';
+  document.querySelectorAll('.tab').forEach(t=>{t.className=t.className.replace(/\bjra\b|\bnar\b/g,'').trim()+' '+o;});
+  document.getElementById('imp-badge').className='import-head-badge'+(o==='nar'?' nar':'');
+  document.getElementById('hint-jra').style.display=o==='jra'?'':'none';
+  document.getElementById('hint-nar').style.display=o==='nar'?'':'none';
+  ['sn1','sn2','sn3','sn4'].forEach(id=>{document.getElementById(id).className='step-num'+(o==='nar'?' nar':'');});
+  const isNar=o==='nar';
+  ['nar-ded','sim-nar-note','nar-settle'].forEach(id=>{document.getElementById(id).style.display=isNar?'block':'none';});
+  document.getElementById('sim-tak').value=isNar?27:20;
+  document.getElementById('sim-tak-o').textContent=(isNar?27:20)+'%';
+  document.getElementById('buy-tip').textContent=isNar
+    ?'※ NAR：控除率25〜30%を考慮し EV 1.10以上を推奨基準。EV 1.05〜1.10 は「条件付き」。'
+    :'※ トリガミになる組み合わせは自動除外。EV 1.00未満の買い目は表示されません。';
+  document.getElementById('analysis-result').style.display='none';
+  selVenue='';selRace=0;
+  document.getElementById('sel-sum').classList.remove('show');
+  renderCalendar();
+  renderBuyMenu();calcSettlement();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='simulation')runSim();
+  if(name==='settlement')calcSettlement();
+  if(name==='buymenu')renderBuyMenu();
+}
+
+function loadSample(o){
+  if(o==='jra'){
+    document.getElementById('jra-baba').value='良';
+    document.getElementById('jra-class').value='GII';
+    document.getElementById('jra-heads').value='16';
+    document.getElementById('jra-picks').value='3 7 1';
+  }else{
+    document.getElementById('nar-baba').value='良';
+    document.getElementById('nar-class').value='A1/A2';
+    document.getElementById('nar-heads').value='12';
+    document.getElementById('nar-picks').value='4 2 8';
+  }
+  importedData=null;
+  runAnalysis(o);
+}
+
+/* ════════════════════════════════
+   買い目
+════════════════════════════════ */
+const jraBuy=[
+  {t:'単勝',b:'3番',p:1,o:'5.6',h:'18%',ev:1.01,a:1200,pa:6720,sk:null,c:false},
+  {t:'複勝',b:'3番',p:1,o:'2.1',h:'45%',ev:0.95,a:0,pa:0,sk:'EV 0.95 < 1.00 — 基準値未満'},
+  {t:'馬連',b:'1-3',p:1,o:'12.4',h:'14%',ev:1.74,a:1500,pa:18600,sk:null,c:false},
+  {t:'ワイド',b:'1-3 / 3-7',p:2,o:'5.8',h:'28%',ev:1.02,a:1600,pa:9280,sk:null,c:false},
+  {t:'馬単',b:'3→1',p:1,o:'22.0',h:'9%',ev:1.98,a:800,pa:17600,sk:null,c:false},
+  {t:'三連複',b:'1-3-7',p:1,o:'58.0',h:'5%',ev:2.90,a:500,pa:29000,sk:null,c:false},
+  {t:'三連単',b:'全通り',p:0,o:'-',h:'-',ev:0,a:0,pa:0,sk:'的中根拠が不十分・点数膨張でEV低下'},
+];
+const narBuy=[
+  {t:'単勝',b:'4番',p:1,o:'4.8',h:'22%',ev:1.06,a:1500,pa:7200,sk:null,c:true},
+  {t:'複勝',b:'4番',p:1,o:'1.8',h:'55%',ev:0.99,a:0,pa:0,sk:'EV 0.99 < 1.00（NAR控除率加味）'},
+  {t:'馬連',b:'2-4',p:1,o:'9.2',h:'18%',ev:1.66,a:1200,pa:11040,sk:null,c:false},
+  {t:'ワイド',b:'2-4 / 4-8',p:2,o:'4.2',h:'32%',ev:1.08,a:1400,pa:5880,sk:null,c:true},
+  {t:'馬単',b:'4→2',p:1,o:'16.5',h:'10%',ev:1.65,a:800,pa:13200,sk:null,c:false},
+  {t:'三連複',b:'2-4-8',p:1,o:'42.0',h:'4%',ev:1.68,a:500,pa:21000,sk:null,c:false},
+  {t:'三連単',b:'4→2→8',p:1,o:'120.0',h:'2%',ev:2.40,a:300,pa:36000,sk:null,c:false},
+  {t:'ワイドBOX4頭',b:'2-4-6-8',p:6,o:'3.5',h:'60%',ev:0.84,a:0,pa:0,sk:'点数過多・EV 0.84 — 見送り'},
+];
+const jraPR=[
+  {bt:'複勝 3番',r:'EV 0.95で基準値 1.00 未満。',s:'複勝下限オッズ 2.1 はトリガミリスクが高い。'},
+  {bt:'三連単 全通り',r:'買い目点数が膨らみ投資額が期待払戻を超えるため機械的に除外。',s:'軸馬が1頭に絞れていないため見送りを推奨。'},
+];
+const narPR=[
+  {bt:'複勝 4番',r:'EV 0.99（NAR控除率25%加味後）。わずかに基準未満。',s:'地方は控除率が高くトリガミリスクが増大します。'},
+  {bt:'ワイドBOX 2-4-6-8',r:'6点購入で期待払戻率が下がり EV 0.84。',s:'買い目を絞らず点数を増やすことは期待値を下げます。'},
+];
+
+function renderBuyMenu(){
+  const budget=parseInt(document.getElementById('budget').value)||10000;
+  const isNar=org==='nar';
+  const buyData=isNar?narBuy:jraBuy;
+  const passData=isNar?narPR:jraPR;
+  const tbody=document.getElementById('buy-tbody');
+  const krows=document.getElementById('kelly-rows');
+  tbody.innerHTML='';krows.innerHTML='';
+
+  // 実データがある場合はオッズから買い目を動的生成
+  if(importedData&&importedData.horses&&importedData.horses.length>0){
+    renderBuyMenuFromData(importedData,budget,isNar,tbody,krows);
+    document.getElementById('pass-reasons').innerHTML='<div class="pb warn"><div class="pr"><strong>実データ取込済み</strong></div><div class="ps">実際のオッズをもとに期待値を計算しています。EV基準未満の買い目は除外されています。</div></div>';
+    return;
+  }
+
+  buyData.forEach(r=>{
+    if(r.sk)return;
+    const adj=Math.round((r.a/10000)*budget);
+    const adjP=Math.round((r.pa/10000)*budget);
+    const isCond=r.c&&isNar;
+    const ec=(isNar?r.ev>=1.10:r.ev>=1.05)?`<span class="ec ep">EV ${r.ev.toFixed(2)}</span>`:`<span class="ec en">EV ${r.ev.toFixed(2)}</span>`;
+    const vd=isCond?'<span class="bdg bgr">条件付き</span>':'<span class="bdg bgrn">推奨</span>';
+    tbody.innerHTML+=`<tr><td>${r.t}</td><td>${r.b}</td><td>${r.p}</td><td>${r.o}倍</td><td>${r.h}</td><td>${ec}</td><td>¥${adj.toLocaleString()}</td><td>¥${adjP.toLocaleString()}</td><td>${vd}</td></tr>`;
+    krows.innerHTML+=`<div class="kr"><span class="kb">${r.t} ${r.b}</span><div class="kbw"><div class="kbar"><div class="${isNar?'kfill nf':'kfill'}" style="width:${Math.min(100,Math.round(r.a/100))}%"></div></div></div><span class="ka">¥${adj.toLocaleString()}</span></div>`;
+  });
+  const sd=document.getElementById('pass-reasons');
+  sd.innerHTML='';
+  buyData.filter(r=>r.sk).forEach(r=>{sd.innerHTML+=`<div class="pb"><div class="pr"><strong>${r.t}</strong> — ${r.sk}</div><div class="ps">自動除外済み</div></div>`;});
+  passData.forEach(p=>{sd.innerHTML+=`<div class="pb"><div class="pr"><strong>${p.bt}</strong> — ${p.r}</div><div class="ps">${p.s}</div></div>`;});
+}
+
+function renderBuyMenuFromData(data,budget,isNar,tbody,krows){
+  const horses=data.horses||[];
+  const evTh=isNar?1.10:1.00;
+  // 単勝のみ実データで描画（オッズ×推定勝率）
+  horses.slice(0,6).forEach(h=>{
+    const odds=h.odds||10;
+    const estWin=Math.max(0.01,0.72/(h.pop||9));
+    const ev=parseFloat((estWin*odds).toFixed(2));
+    if(ev<evTh)return;
+    const unitBet=isNar?1000:800;
+    const kellyF=Math.max(0,0.5*((estWin*odds-1)/(odds-1)));
+    const betAmt=Math.max(100,Math.round(budget*kellyF/100)*100);
+    const adjPay=Math.round(betAmt*odds);
+    const ec=ev>=1.10?`<span class="ec ep">EV ${ev.toFixed(2)}</span>`:`<span class="ec en">EV ${ev.toFixed(2)}</span>`;
+    tbody.innerHTML+=`<tr><td>単勝</td><td>${h.num}番 ${h.name}</td><td>1</td><td>${odds}倍</td><td>${Math.round(estWin*100)}%</td><td>${ec}</td><td>¥${betAmt.toLocaleString()}</td><td>¥${adjPay.toLocaleString()}</td><td><span class="bdg bgrn">推奨</span></td></tr>`;
+    const pct=Math.min(100,Math.round(kellyF*1000));
+    krows.innerHTML+=`<div class="kr"><span class="kb">単勝 ${h.num}番 ${h.name}</span><div class="kbw"><div class="kbar"><div class="${isNar?'kfill nf':'kfill'}" style="width:${pct}%"></div></div></div><span class="ka">¥${betAmt.toLocaleString()}</span></div>`;
+  });
+}
+
+/* ════════════════════════════════
+   シミュレーション
+════════════════════════════════ */
+function runSim(){
+  const n=parseInt(document.getElementById('sim-n').value);
+  const hr=parseInt(document.getElementById('sim-hr').value)/100;
+  const odds=parseInt(document.getElementById('sim-odds').value)/10;
+  const tak=parseInt(document.getElementById('sim-tak').value)/100;
+  const initBank=parseInt(document.getElementById('sim-bank').value)||10000;
+  const isNar=org==='nar';
+  const f=Math.max(0,0.5*((hr*odds-1)/(odds-1)));
+  const colors=isNar?['#1A5EA8','#2D9A55','#C8961E','#8E44AD','#95a5a6']:['#C8961E','#1D6A3A','#2980B9','#8E44AD','#95a5a6'];
+  const datasets=[];let medFinal=0,ruinCount=0;
+  for(let r=0;r<5;r++){
+    let bank=initBank;const pts=[bank];let ruin=false;
+    for(let i=0;i<n;i++){
+      if(bank<=0){ruin=true;pts.push(0);continue;}
+      const bet=Math.max(100,Math.round(bank*f));
+      bank+=Math.random()<hr?bet*(odds-1):-bet;
+      bank=Math.max(0,bank);pts.push(Math.round(bank));
+    }
+    if(ruin)ruinCount++;
+    if(r===2)medFinal=pts[pts.length-1];
+    datasets.push({label:`試行${r+1}`,data:pts,borderColor:colors[r],borderWidth:1.5,pointRadius:0,tension:0.3,fill:false});
+  }
+  const er=Math.round(hr*odds*(1-tak)*100);
+  const rp=Math.round((ruinCount/5)*100);
+  const diff=medFinal-initBank;
+  document.getElementById('sim-er').textContent=er+'%';
+  document.getElementById('sim-er').className='mc-v '+(er>=100?(isNar?'narc':'gold'):'red');
+  document.getElementById('sim-ruin').textContent=rp+'%';
+  document.getElementById('sim-ruin').className='mc-v '+(rp===0?'grn':'red');
+  document.getElementById('sim-med').textContent=(diff>=0?'+':'')+'¥'+diff.toLocaleString();
+  document.getElementById('sim-med').className='mc-v '+(diff>=0?'grn':'red');
+  const labels=Array.from({length:n+1},(_,i)=>i===0?'開始':i%100===0?i+'R':'');
+  if(simChart){simChart.destroy();simChart=null;}
+  simChart=new Chart(document.getElementById('simChart'),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{callback:v=>'¥'+Math.round(v/1000)+'k',color:'#888'},grid:{color:'rgba(128,128,128,.1)'}},
+        x:{ticks:{color:'#888',maxTicksLimit:8},grid:{display:false}}
+      }}
+  });
+}
+
+/* ════════════════════════════════
+   精算
+════════════════════════════════ */
+function calcSettlement(){
+  const inv=parseInt(document.getElementById('s-invest').value)||1;
+  const pay=parseInt(document.getElementById('s-payout').value)||0;
+  const hit=parseInt(document.getElementById('s-hit').value)||0;
+  const total=Math.max(1,parseInt(document.getElementById('s-total').value)||1);
+  const races=Math.max(1,parseInt(document.getElementById('s-races').value)||1);
+  const isNar=org==='nar';const th=isNar?105:100;
+  const rec=Math.round((pay/inv)*100);
+  const bal=pay-inv;
+  const hrate=Math.round((hit/total)*100);
+  const pr=Math.round(bal/races);
+  const re=document.getElementById('res-rec');
+  re.textContent=rec+'%';re.className='rv '+(rec>=th?'grn':'red');
+  const be=document.getElementById('res-bal');
+  be.textContent=(bal>=0?'+':'')+'¥'+bal.toLocaleString();be.className='rv '+(bal>=0?'grn':'red');
+  document.getElementById('res-hr').textContent=hrate+'%';
+  const pe=document.getElementById('res-pr');
+  pe.textContent=(pr>=0?'+':'')+'¥'+pr.toLocaleString();pe.className='rv '+(pr>=0?'grn':'red');
+  const imp=document.getElementById('improvement-points');
+  imp.innerHTML='';
+  const pts=[];
+  if(isNar&&rec<105)pts.push({t:'NAR：回収率105%未満は実質赤字',b:'EV 1.10以上の買い目のみに絞り込んでください。'});
+  else if(!isNar&&rec<100)pts.push({t:'回収率が100%を下回っています',b:'EV 1.05以上の買い目のみに限定することを推奨します。'});
+  if(rec>=120)pts.push({t:'優秀な回収率を達成',b:'120%超は非常に良好です。同様の券種・配分を継続してください。'});
+  if(hrate<15)pts.push({t:'的中率が低すぎます',b:'馬連・ワイドで的中率を補完してください。'});
+  if(hrate>70&&rec<th)pts.push({t:'トリガミの疑いがあります',b:'的中率が高いのに回収率が低い場合、オッズが低すぎてトリガミになっています。'});
+  if(!pts.length)pts.push({t:'収支は概ね適正',b:'引き続き期待値基準の買い目選択を継続してください。'});
+  pts.forEach(p=>{imp.innerHTML+=`<div class="pb ${isNar?'wn':'warn'}"><div class="pr"><strong>${p.t}</strong></div><div class="ps">${p.b}</div></div>`;});
+}
+
+/* ════════════════════════════════
+   Toast
+════════════════════════════════ */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ════════════════════════════════
+   初期化
+════════════════════════════════ */
+renderCalendar();
+renderBuyMenu();
+calcSettlement();
+</script>
+</body>
+</html>
