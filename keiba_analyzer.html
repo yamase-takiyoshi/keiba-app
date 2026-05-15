@@ -843,13 +843,21 @@ function renderHorses(o,data){
   let horses;
   if(data&&data.horses&&data.horses.length>0){
     // 実データから期待値を計算して描画
-    horses=data.horses.map(h=>{
+    // pop が全馬0/null のとき単勝オッズ昇順で人気順位を自動補完
+    const _hs=data.horses;
+    const _hasAnyPop=_hs.some(h=>Number(h.pop||0)>0);
+    if(!_hasAnyPop){
+      const _sorted=[..._hs].filter(h=>Number(h.odds||0)>1).sort((a,b)=>Number(a.odds)-Number(b.odds));
+      const _popMap=new Map(_sorted.map((h,i)=>[h.num,i+1]));
+      _hs.forEach(h=>{ if(_popMap.has(h.num)) h.pop=_popMap.get(h.num); });
+    }
+    horses=_hs.map(h=>{
       const odds=h.odds||10;
-      const pop=h.pop||9;
+      const pop=Number(h.pop)||9;
       // 人気から推定勝率（簡易モデル）
       const estWin=Math.max(0.01, 0.72/pop);
       const ev=parseFloat((estWin*odds).toFixed(2));
-      return {...h, ev, win:estWin};
+      return {...h, pop, ev, win:estWin};
     });
   }else{
     // サンプルデータ
@@ -871,13 +879,14 @@ function renderHorses(o,data){
     const evPct=Math.min(100,Math.round(h.ev*80));
     const evClass=h.ev>=(isNar?1.15:1.05)?'ef-g':h.ev>=th?(isNar?'ef-n':''):'ef-r';
     const topClass=isTop?(isNar?'tn':'tj'):'';
-    const popB=h.pop<=2?`<span class="bdg ${isNar?'bn':'bg'}">人気${h.pop}</span>`:'';
+    const _pop=Number(h.pop)||0;
+    const popB=_pop>=1&&_pop<=2?`<span class="bdg ${isNar?'bn':'bg'}">人気${_pop}</span>`:'';
     const evB=h.ev>=(isNar?1.10:1.05)?'<span class="bdg bgrn">EV良</span>':h.ev<th?'<span class="bdg bred">見送り</span>':'';
     const jockeyInfo=h.jockey?`<span class="bdg bgr">${h.jockey}</span>`:'';
     const weightInfo=h.weight?`<span class="bdg bgr">${h.weight}kg${h.weight_diff!==undefined&&h.weight_diff!==0?(h.weight_diff>0?'+':'')+h.weight_diff:''}</span>`:'';
     const noteText=h.note||`推定勝率 ${Math.round((h.win||0)*100)}%`;
     grid.innerHTML+=`<div class="hc ${topClass}">
-      <div class="h-num">${h.num}番 | ${h.style||'—'} | 人気${h.pop}</div>
+      <div class="h-num">${h.num}番 | ${h.style||'—'} | 人気${_pop||'?'}</div>
       <div class="h-name">${h.name}</div>
       <div class="hbdgs">${popB}${evB}${jockeyInfo}${weightInfo}<span class="bdg bgr">${h.odds}倍</span></div>
       <div style="font-size:11px;color:var(--tx2);margin-top:4px;">EV = ${h.ev.toFixed(2)}${isNar?' (基準1.10)':''}</div>
@@ -1193,7 +1202,7 @@ function renderBuyMenuFromData(data,budget,isNar,tbody,krows){
   // 単勝のみ実データで描画（オッズ×推定勝率）
   horses.slice(0,6).forEach(h=>{
     const odds=h.odds||10;
-    const estWin=Math.max(0.01,0.72/(h.pop||9));
+    const estWin=Math.max(0.01,0.72/(Number(h.pop)||9));
     const ev=parseFloat((estWin*odds).toFixed(2));
     if(ev<evTh)return;
     const unitBet=isNar?1000:800;
